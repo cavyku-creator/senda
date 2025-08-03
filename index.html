@@ -103,15 +103,15 @@
     <button class="edit-schedule-button" onclick="toggleEditSchedule()">🖋️ 编辑时间表</button>
     <table id="schedule-table">
       <tr><th>时间段</th><th>任务安排</th><th>操作</th></tr>
-      <tr><td>7:30 - 8:30</td><td>洗漱早餐 + 英语单词</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td>8:30 - 11:30</td><td>数学一主攻</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td>11:30 - 12:30</td><td>午餐 + 休息</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td>12:30 - 14:00</td><td>英语阅读/翻译/语法</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td>14:00 - 16:30</td><td>专业课刷题 + 总结</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td>16:30 - 17:30</td><td>锻炼 + 放松</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td>17:30 - 19:00</td><td>晚餐 + 自由时间</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td>19:00 - 21:00</td><td>政治背诵 or 真题选择</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td>21:00 - 22:00</td><td>错题整理 + 明日规划</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td contenteditable="true">7:30 - 8:30</td><td contenteditable="true">洗漱早餐 + 英语单词</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td contenteditable="true">8:30 - 11:30</td><td contenteditable="true">数学一主攻</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td contenteditable="true">11:30 - 12:30</td><td contenteditable="true">午餐 + 休息</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td contenteditable="true">12:30 - 14:00</td><td contenteditable="true">英语阅读/翻译/语法</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td contenteditable="true">14:00 - 16:30</td><td contenteditable="true">专业课刷题 + 总结</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td contenteditable="true">16:30 - 17:30</td><td contenteditable="true">锻炼 + 放松</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td contenteditable="true">17:30 - 19:00</td><td contenteditable="true">晚餐 + 自由时间</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td contenteditable="true">19:00 - 21:00</td><td contenteditable="true">政治背诵 or 真题选择</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td contenteditable="true">21:00 - 22:00</td><td contenteditable="true">错题整理 + 明日规划</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
     </table>
     <button onclick="addScheduleRow()">➕ 添加时间段</button>
   </div>
@@ -191,14 +191,8 @@
       rows.forEach((row, idx) => {
         if (idx === 0) return;
         const cells = row.children;
-        cells[1].innerHTML = `<input type='text' value='${cells[1].textContent}' />`;
-      });
-      document.querySelectorAll("#schedule-table input").forEach(input => {
-        input.addEventListener("blur", (e) => {
-          const cell = e.target.closest("td");
-          cell.innerHTML = e.target.value;
-          saveSchedule();
-        });
+        cells[1].setAttribute("contenteditable", "true");
+        cells[0].setAttribute("contenteditable", "true");
       });
     }
 
@@ -221,6 +215,7 @@
         row.insertCell(1).textContent = item.task;
         const deleteCell = row.insertCell(2);
         deleteCell.innerHTML = `<button onclick="deleteRow(this)">删除</button>`;
+        row.querySelectorAll("td").forEach(td => td.setAttribute("contenteditable", "true"));
       });
     }
 
@@ -236,10 +231,10 @@
       row.insertCell(1).textContent = "新的任务";
       const deleteCell = row.insertCell(2);
       deleteCell.innerHTML = `<button onclick="deleteRow(this)">删除</button>`;
+      row.querySelectorAll("td").forEach(td => td.setAttribute("contenteditable", "true"));
     }
 
     loadSchedule();
   </script>
 </body>
 </html>
-
