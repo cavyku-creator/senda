@@ -1,1 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>考研倒计时学习助手</title>
+  <style>
+    body {
+      font-family: "Helvetica Neue", sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 2em;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    #countdown {
+      font-size: 2em;
+      text-align: center;
+      margin-bottom: 1.5em;
+    }
+    .task-container, .schedule-container, .pomodoro-container {
+      max-width: 700px;
+      margin: 2em auto;
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 2em;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .task, .time-block {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1em;
+      font-size: 1.1em;
+    }
+    .task input[type="checkbox"] {
+      margin-right: 0.75em;
+      transform: scale(1.3);
+    }
+    .footer {
+      text-align: center;
+      margin-top: 2em;
+      color: #888;
+      font-size: 0.9em;
+    }
+    .reset-button, .pomodoro-button, .add-task-button, .edit-schedule-button {
+      display: block;
+      margin: 1em auto;
+      padding: 0.5em 1.5em;
+      font-size: 1em;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .reset-button:hover, .pomodoro-button:hover, .add-task-button:hover, .edit-schedule-button:hover {
+      background-color: #2980b9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.75em;
+      text-align: center;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    #pomodoro-timer {
+      text-align: center;
+      font-size: 2em;
+      margin-top: 1em;
+    }
+    .task input[type="text"] {
+      flex: 1;
+      font-size: 1em;
+      padding: 0.4em;
+    }
+    .task .remove-task {
+      margin-left: 1em;
+      color: red;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>📚 考研倒计时学习助手</h1>
+  <div id="countdown"></div>
+
+  <div class="task-container">
+    <div id="task-list"></div>
+    <input type="text" id="new-task-text" placeholder="添加新任务...">
+    <button class="add-task-button" onclick="addTask()">➕ 添加任务</button>
+    <button class="reset-button" onclick="resetTasks()">🔄 重置今日任务</button>
+  </div>
+
+  <div class="schedule-container">
+    <h2>📅 每日时间规划表</h2>
+    <button class="edit-schedule-button" onclick="toggleEditSchedule()">🖋️ 编辑时间表</button>
+    <table id="schedule-table">
+      <tr><th>时间段</th><th>任务安排</th><th>操作</th></tr>
+      <tr><td>7:30 - 8:30</td><td>洗漱早餐 + 英语单词</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td>8:30 - 11:30</td><td>数学一主攻</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td>11:30 - 12:30</td><td>午餐 + 休息</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td>12:30 - 14:00</td><td>英语阅读/翻译/语法</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td>14:00 - 16:30</td><td>专业课刷题 + 总结</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td>16:30 - 17:30</td><td>锻炼 + 放松</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td>17:30 - 19:00</td><td>晚餐 + 自由时间</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td>19:00 - 21:00</td><td>政治背诵 or 真题选择</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+      <tr><td>21:00 - 22:00</td><td>错题整理 + 明日规划</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
+    </table>
+    <button onclick="addScheduleRow()">➕ 添加时间段</button>
+  </div>
+
+  <div class="pomodoro-container">
+    <h2>⏱ ADHD友好番茄钟</h2>
+    <div id="pomodoro-timer">25:00</div>
+    <button class="pomodoro-button" onclick="startPomodoro()">▶️ 开始专注 25 分钟</button>
+    <button class="pomodoro-button" onclick="resetPomodoro()">🔁 重置</button>
+  </div>
+
+  <div class="footer">当前任务状态将自动保存（本地存储）。刷新页面也不会丢失。</div>
+
+  <audio id="beep-sound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+
+  <script>
+    const endDate = new Date("2025-12-15T00:00:00").getTime();
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = endDate - now;
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      document.getElementById("countdown").innerHTML = `距离考研还有 <strong>${days}</strong> 天`;
+    }
+
+    function saveTasks() {
+      const tasks = [];
+      document.querySelectorAll(".task-item").forEach((el, idx) => {
+        const checkbox = el.querySelector("input[type='checkbox']");
+        const text = el.querySelector("label").textContent;
+        tasks.push({ text, checked: checkbox.checked });
+      });
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+      const list = document.getElementById("task-list");
+      list.innerHTML = "";
+      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+      tasks.forEach((task, idx) => {
+        const div = document.createElement("div");
+        div.className = "task task-item";
+        div.innerHTML = `<input type="checkbox" ${task.checked ? 'checked' : ''}> <label>${task.text}</label><span class="remove-task" onclick="removeTask(this)">🗑️</span>`;
+        div.querySelector("input").addEventListener("change", saveTasks);
+        list.appendChild(div);
+      });
+    }
+
+    function addTask() {
+      const text = document.getElementById("new-task-text").value.trim();
+      if (!text) return;
+      const div = document.createElement("div");
+      div.className = "task task-item";
+      div.innerHTML = `<input type="checkbox"> <label>${text}</label><span class="remove-task" onclick="removeTask(this)">🗑️</span>`;
+      div.querySelector("input").addEventListener("change", saveTasks);
+      document.getElementById("task-list").appendChild(div);
+      document.getElementById("new-task-text").value = "";
+      saveTasks();
+    }
+
+    function removeTask(el) {
+      el.parentElement.remove();
+      saveTasks();
+    }
+
+    function resetTasks() {
+      document.querySelectorAll(".task-item input[type='checkbox']").forEach(cb => cb.checked = false);
+      saveTasks();
+    }
+
+    updateCountdown();
+    loadTasks();
+
+    // Schedule edit functions
+    function toggleEditSchedule() {
+      const table = document.getElementById("schedule-table");
+      const rows = table.querySelectorAll("tr");
+      rows.forEach((row, idx) => {
+        if (idx === 0) return;
+        const cells = row.children;
+        cells[1].innerHTML = `<input type='text' value='${cells[1].textContent}' />`;
+      });
+      document.querySelectorAll("#schedule-table input").forEach(input => {
+        input.addEventListener("blur", (e) => {
+          const cell = e.target.closest("td");
+          cell.innerHTML = e.target.value;
+          saveSchedule();
+        });
+      });
+    }
+
+    function saveSchedule() {
+      const schedule = [];
+      document.querySelectorAll("#schedule-table tr").forEach((row, idx) => {
+        if (idx === 0) return;
+        const cells = row.children;
+        schedule.push({ time: cells[0].textContent, task: cells[1].textContent });
+      });
+      localStorage.setItem("schedule", JSON.stringify(schedule));
+    }
+
+    function loadSchedule() {
+      const schedule = JSON.parse(localStorage.getItem("schedule")) || [];
+      const table = document.getElementById("schedule-table");
+      schedule.forEach(item => {
+        const row = table.insertRow();
+        row.insertCell(0).textContent = item.time;
+        row.insertCell(1).textContent = item.task;
+        const deleteCell = row.insertCell(2);
+        deleteCell.innerHTML = `<button onclick="deleteRow(this)">删除</button>`;
+      });
+    }
+
+    function deleteRow(button) {
+      button.closest("tr").remove();
+      saveSchedule();
+    }
+
+    function addScheduleRow() {
+      const table = document.getElementById("schedule-table");
+      const row = table.insertRow();
+      row.insertCell(0).textContent = "新的时间段";
+      row.insertCell(1).textContent = "新的任务";
+      const deleteCell = row.insertCell(2);
+      deleteCell.innerHTML = `<button onclick="deleteRow(this)">删除</button>`;
+    }
+
+    loadSchedule();
+  </script>
+</body>
+</html>
 
