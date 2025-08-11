@@ -1,10 +1,243 @@
-<!DOCTYPE html>
+<!-- 新增：阶段周计划 + 时间规划表 -->
+<div class="grid">
+  <div class="panel" id="planPanel">
+    <div class="hd">
+      <strong>阶段周计划</strong>
+      <div class="row">
+        <span class="badge" id="phaseLabel">阶段</span>
+        <button class="btn icon" id="wkPrev" title="上一周">◀</button>
+        <span class="badge" id="wkLabel">第 1 周 · --/-- – --/--</span>
+        <button class="btn icon" id="wkNext" title="下一周">▶</button>
+        <button class="btn" id="pushWeek" title="把本周计划生成到待办">下发本周到待办</button>
+      </div>
+    </div>
+    <div class="bd">
+      <ul id="wkGoals" class="wk-list"></ul>
+      <div class="muted" style="margin-top:6px">提示：这是“周级目标清单”。点击“下发本周到待办”会自动把本周的日常配额生成带截止日期的任务。</div>
+    </div>
+  </div>
+
+  <div class="panel" id="ttPanel">
+    <div class="hd">
+      <strong>时间规划表</strong>
+      <span class="badge">日程样式：07:30–22:00</span>
+    </div>
+    <div class="bd">
+      <div id="ttBox" class="tt-grid" aria-label="时间规划表"></div>
+      <div class="muted" style="margin-top:6px">说明：此表为默认学习节奏。你随时可以在代码里调整默认条目（或后续做可视化编辑）。</div>
+    </div>
+  </div>
+</div>
+2) 在 CSS 末尾加样式
+css
+复制
+编辑
+/* 周计划 & 时间规划表 */
+.wk-list{margin:0; padding-left:18px}
+.wk-list li{margin:6px 0}
+.tt-grid{}
+.tt-row{display:grid; grid-template-columns:120px 1fr; gap:10px; padding:10px; border-radius:12px;
+  background:var(--panel-hi); border:1px dashed color-mix(in oklab, var(--text) 16%, transparent); margin-bottom:8px}
+.tt-time{font-weight:700; color:var(--muted)}
+3) 在 JS 里新增数据种子 + 渲染逻辑
+把下面三段分别放到相应位置：
+
+3.1 放到 seedIfFirstBoot() 内（靠近你设置 examDate/goalMin 的地方），用于首启写入默认“时间规划表”和“阶段周计划”：
+js
+复制
+编辑
+// —— 时间规划表（默认）——
+const defaultTT = [
+  {time:'07:30–08:00', title:'英语热身（词汇/朗读）'},
+  {time:'08:00–10:30', title:'数学攻坚（计算+难题，番茄 50/10 ×3）'},
+  {time:'10:45–12:00', title:'专业课Ⅰ（信号为主）'},
+  {time:'12:00–13:20', title:'午餐 + 休息20min'},
+  {time:'13:30–15:00', title:'英语阅读/翻译（分项）'},
+  {time:'15:10–15:50', title:'政治选择题（1000题）'},
+  {time:'16:00–17:15', title:'健身房/肩部康复'},
+  {time:'17:45–18:15', title:'晚餐'},
+  {time:'19:00–21:00', title:'专业课Ⅱ或数学二轮'},
+  {time:'21:00–21:30', title:'英语作文/政治背诵'},
+  {time:'21:30–22:00', title:'复盘卡（错题3条/收获3条/明日3事）'}
+];
+store.set('timetable', defaultTT);
+
+// —— 阶段周计划（19周）——
+const phases = [
+  {name:'阶段1｜强化夯实', weeks:4, goals:{
+    math:'《1000题》A/B 每日≈13题；每周周测30题',
+    eng:'长难句 20句/周；阅读 6篇/周；作文素材 2篇/周',
+    pro:'信号：卷积/系统响应等每章10–20题；数电：组合→时序逻辑',
+    pol:'《1000题》第一遍：50题/日 ×5天'
+  }},
+  {name:'阶段2｜二刷与专题突破', weeks:4, goals:{
+    math:'《1000题》B/C + 专题讲义速刷；每周加一次180min仿真',
+    eng:'分项刷题（阅读/完形/新题型）；周末整卷 1 套',
+    pro:'信号：傅里叶/拉氏/采样/滤波；数电：时序/时钟/综合题',
+    pol:'《1000题》第二遍 + 主观题框架'
+  }},
+  {name:'阶段3｜真题主攻', weeks:4, goals:{
+    math:'整年真题 每周 2 套（配订正与再解）',
+    eng:'真题整套 每周 1–2 套；作文 A/B 模板各写 1篇',
+    pro:'3天一套类真题 + 2天剖析；每周一次综合大题仿真',
+    pol:'选择题第三遍 + 背诵节律启动'
+  }},
+  {name:'阶段4｜模拟拔高', weeks:4, goals:{
+    math:'周末全真；工作日强订正+薄弱专题回炉',
+    eng:'作文模板定稿，日演练',
+    pro:'错题清零 + 专题要领卡',
+    pol:'时政/主观题三轮背诵'
+  }},
+  {name:'阶段5｜冲刺查缺', weeks:3, goals:{
+    math:'只做错题二次订正 + 高频题型滚动',
+    eng:'作文每日快写 1 篇',
+    pro:'类真题轻量维护',
+    pol:'背诵每日三遍（早/午/晚）'
+  }}
+];
+
+// 以“本周一”为起点，顺排19周
+const ymd = d => `${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())}`;
+const monday = d => { const t=new Date(d); const w=(t.getDay()+6)%7; t.setDate(t.getDate()-w); t.setHours(0,0,0,0); return t; };
+const addDays = (d, n) => { const t=new Date(d); t.setDate(t.getDate()+n); return t; };
+
+const weeks = [];
+let cur = monday(new Date());
+phases.forEach(ph=>{
+  for(let i=0;i<ph.weeks;i++){
+    const s = new Date(cur);
+    const e = addDays(cur, 6);
+    weeks.push({idx: weeks.length+1, phase: ph.name, start: ymd(s), end: ymd(e), goals: ph.goals});
+    cur = addDays(cur, 7);
+  }
+});
+store.set('phaseWeeks', weeks);
+store.set('curWeekIdx', 1);
+3.2 放在全局工具函数附近（fmt2 下面一带）——渲染与交互逻辑：
+js
+复制
+编辑
+// —— 阶段周计划 & 时间表：渲染工具 —— 
+function parseYMD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); }
+function cnRange(a,b){ const A=parseYMD(a), B=parseYMD(b); return `${A.getMonth()+1}/${A.getDate()}–${B.getMonth()+1}/${B.getDate()}`; }
+
+function renderWeekPlan(){
+  const ws = store.get('phaseWeeks', []);
+  if(!ws.length) return;
+  let idx = clamp(store.get('curWeekIdx',1), 1, ws.length);
+  store.set('curWeekIdx', idx);
+  const w = ws[idx-1];
+  $('#phaseLabel').textContent = w.phase;
+  $('#wkLabel').textContent = `第 ${w.idx} 周 · ${cnRange(w.start, w.end)}`;
+
+  const g = w.goals;
+  $('#wkGoals').innerHTML = [
+    `<li><b>数学</b>：${g.math}</li>`,
+    `<li><b>英语</b>：${g.eng}</li>`,
+    `<li><b>专业课</b>：${g.pro}</li>`,
+    `<li><b>政治</b>：${g.pol}</li>`
+  ].join('');
+}
+
+function renderTimetable(){
+  const tt = store.get('timetable', []);
+  const html = tt.map(b=>`<div class="tt-row"><div class="tt-time">${b.time}</div><div>${escapeHtml(b.title)}</div></div>`).join('');
+  $('#ttBox').innerHTML = html;
+}
+
+// 绑定按钮
+const wkPrev = document.getElementById('wkPrev');
+const wkNext = document.getElementById('wkNext');
+if(wkPrev && wkNext){
+  wkPrev.onclick = ()=>{ const n = clamp(store.get('curWeekIdx',1)-1, 1, store.get('phaseWeeks',[]).length); store.set('curWeekIdx', n); renderWeekPlan(); };
+  wkNext.onclick = ()=>{ const n = clamp(store.get('curWeekIdx',1)+1, 1, store.get('phaseWeeks',[]).length); store.set('curWeekIdx', n); renderWeekPlan(); };
+}
+
+// 一键下发到待办（按“工作日常规+周末例行”的模板分配截止日）
+const pushWeekBtn = document.getElementById('pushWeek');
+if(pushWeekBtn){
+  pushWeekBtn.onclick = ()=> dispatchWeek(store.get('curWeekIdx',1));
+}
+function dispatchWeek(idx){
+  const ws = store.get('phaseWeeks', []);
+  if(!ws.length) return;
+  const w = ws[clamp(idx,1,ws.length)-1];
+  const s = parseYMD(w.start);
+  const due = i => ymd(new Date(s.getFullYear(), s.getMonth(), s.getDate()+i));
+  // 基础模板：周一至周五“日常四件事”，周六“周测/素材/仿真/整理”，周日“复盘/订正/下周三事”
+  const pack = [
+    // 周一~周五
+    ...[0,1,2,3,4].flatMap(i=>[
+      {t:`数学 · 本周配额（日常13题）`, s:'数学一', d:due(i), p:'P1'},
+      {t:`英语 · 阅读/长难句分项（45–60min）`, s:'英语一', d:due(i)},
+      {t:`政治 · 《1000题》选择 50 题`, s:'政治', d:due(i)},
+      {t:`专业课 · ${w.idx%2?'信号与系统':'数字电路'} 训练（10–20题）`, s:(w.idx%2?'信号与系统':'数字电路'), d:due(i)}
+    ]),
+    // 周六
+    {t:`数学 · 周测 30 题（限时 60min）`, s:'数学一', d:due(5), p:'P1'},
+    {t:`英语 · 作文素材 2 篇（抄写+复述）`, s:'英语一', d:due(5)},
+    {t:`专业课 · 综合大题仿真（90min）`, s:(w.idx%2?'信号与系统':'数字电路'), d:due(5), est:90},
+    {t:`政治 · 错题整理（40min）`, s:'政治', d:due(5), est:40},
+    // 周日
+    {t:`周复盘：错题TOP5重做 + 得失总结（60min）`, s:'其他', d:due(6), est:60},
+    {t:`错题订正回炉（数学/专业课 60min）`, s:'其他', d:due(6), est:60},
+    {t:`下周三件大事规划（20min）`, s:'其他', d:due(6), est:20}
+  ];
+  pack.forEach(x=> addTask({ id:crypto.randomUUID(), title:x.t, subject:x.s, due:x.d, pri:x.p||'P2', est:x.est||25, done:false, createdAt:Date.now() }));
+  alert(`已生成：第 ${w.idx} 周（${cnRange(w.start,w.end)}）的待办清单`);
+  renderTasks();
+}
+
+// 首次渲染
+renderWeekPlan();
+renderTimetable();
+3.3 建议把这一句移动到文件最末尾现有的初始化附近（确保新面板也会刷新）：
+js
+复制
+编辑
+// 初始渲染修正
+setTimeout(()=>{ 
+  drawCharts(); updateKPIs(); updateTodayProgress();
+  renderWeekPlan(); renderTimetable(); // ← 新增
+}, 200);
+使用说明（超短）
+想让阶段周计划 + 时间规划表变成“初始默认值”：点一次“工具与数据 → 恢复出厂(危险)”再刷新即可。
+
+之后在“阶段周计划”面板里用 ◀▶ 切换周，点“下发本周到待办”就会把该周的日常配额批量生成到右侧“今日待办”（都带截止日期）。
+
+“时间规划表”先做显示版；如果你想做可视化编辑（拖拽排序、点选修改时段），我也可以给你加一个小表单。
+
+要不要我再加一个“一键生成全部19周”的按钮（把每周都下发一遍）？或者把阶段 2–5 的任务标签再细分（比如“傅里叶/采样/滤波”等）也能一起做。
+
+
+2/2
+
+
+
+
+
+
+您说：
+请你把版本尽力完善到最佳，然后帮我把所有代码整合好发给我
+
+
+ChatGPT 说：
+
+已思考 49s
+
+分析出错
+python
+始终显示详情
+
+复制
+# This cell writes the integrated single-file HTML to a downloadable file.
+html = r"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>考研学习工作台 · 单文件</title>
-  <meta name="description" content="本页为单文件版考研学习工作台：待办、番茄钟、倒计时、打卡日历、词汇卡片、笔记本、统计、备份/还原。全部数据保存在浏览器本地。" />
+  <title>考研学习工作台 · 单文件（增强版）</title>
+  <meta name="description" content="单文件考研学习工作台：待办、番茄钟、倒计时、打卡日历、词汇卡片、笔记、统计、阶段周计划、时间规划表、备份/还原。全部数据保存在浏览器本地。" />
   <style>
     :root{
       --bg: #0b0f14;
@@ -56,6 +289,7 @@
     .btn.icon{padding:8px; display:inline-grid; place-items:center}
     .btn.primary{background:linear-gradient(135deg, var(--brand), #7cc2ff)}
     .btn.ghost{background:transparent; border:1px solid color-mix(in oklab, var(--text) 12%, transparent)}
+    .btn.danger{background:linear-gradient(135deg, var(--danger), #ff8a8a)}
     .badge{display:inline-block; padding:2px 8px; border-radius:999px; background:var(--panel-hi); font-size:12px; color:var(--muted)}
     main{max-width:1200px; margin:18px auto 40px; padding:0 16px;}
     .grid{display:grid; grid-template-columns: 330px 1fr; gap:var(--gap)}
@@ -120,6 +354,14 @@
     .stats-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
     @media (max-width:900px){.stats-grid{grid-template-columns:1fr}}
     canvas{width:100%; height:220px}
+
+    /* 周计划 & 时间规划表 */
+    .wk-list{margin:0; padding-left:18px}
+    .wk-list li{margin:6px 0}
+    .tt-grid{}
+    .tt-row{display:grid; grid-template-columns:120px 1fr; gap:10px; padding:10px; border-radius:12px;
+      background:var(--panel-hi); border:1px dashed color-mix(in oklab, var(--text) 16%, transparent); margin-bottom:8px}
+    .tt-time{font-weight:700; color:var(--muted)}
 
     /* Footer */
     footer{max-width:1200px; margin:0 auto 80px; padding:0 16px}
@@ -250,6 +492,40 @@
 
     <div style="height:14px"></div>
 
+    <!-- 阶段周计划 + 时间规划表 -->
+    <div class="grid">
+      <div class="panel" id="planPanel">
+        <div class="hd">
+          <strong>阶段周计划</strong>
+          <div class="row">
+            <span class="badge" id="phaseLabel">阶段</span>
+            <button class="btn icon" id="wkPrev" title="上一周" aria-label="上一周">◀</button>
+            <span class="badge" id="wkLabel">第 1 周 · --/-- – --/--</span>
+            <button class="btn icon" id="wkNext" title="下一周" aria-label="下一周">▶</button>
+            <button class="btn" id="pushWeek" title="把本周计划生成到待办">下发本周到待办</button>
+            <button class="btn ghost" id="pushAll" title="一键生成 19 周">一键生成19周</button>
+          </div>
+        </div>
+        <div class="bd">
+          <ul id="wkGoals" class="wk-list"></ul>
+          <div class="muted" style="margin-top:6px">提示：这里展示“周级目标”。点击“下发本周到待办”会自动把本周的日常配额生成带截止日期的任务。</div>
+        </div>
+      </div>
+
+      <div class="panel" id="ttPanel">
+        <div class="hd">
+          <strong>时间规划表</strong>
+          <span class="badge">每日节奏：07:30–22:00</span>
+        </div>
+        <div class="bd">
+          <div id="ttBox" class="tt-grid" aria-label="时间规划表"></div>
+          <div class="muted" style="margin-top:6px">说明：此表为默认学习节奏。后续可升级为可编辑版本。</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:14px"></div>
+
     <div class="grid">
       <div class="panel" id="calendarPanel">
         <div class="hd">
@@ -357,7 +633,7 @@
             <label class="btn ghost" for="importFile">导入数据</label>
             <input type="file" id="importFile" accept="application/json" hidden>
             <button class="btn" id="printBtn">打印学习日报</button>
-            <button class="btn" id="resetAll">恢复出厂(危险)</button>
+            <button class="btn danger" id="resetAll">恢复出厂(危险)</button>
           </div>
           <div class="muted" style="margin-top:6px">所有数据保存在浏览器 <code>localStorage</code> 中；如需多设备同步，后续可接入 Firebase 账号系统。</div>
         </div>
@@ -406,6 +682,9 @@
   const fmt2 = n => String(n).padStart(2,'0');
   const todayKey = (d=new Date()) => d.toISOString().slice(0,10);
   const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const ymd = d => `${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())}`;
+  const monday = d => { const t=new Date(d); const w=(t.getDay()+6)%7; t.setDate(t.getDate()-w); t.setHours(0,0,0,0); return t; };
+  const addDays = (d, n) => { const t=new Date(d); t.setDate(t.getDate()+n); return t; };
 
   // ===== 主题 & 时钟 =====
   const themeBtn = $('#themeBtn');
@@ -414,6 +693,76 @@
   applyTheme();
   function tickNow(){ const d=new Date(); const s=`${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())} ${fmt2(d.getHours())}:${fmt2(d.getMinutes())}:${fmt2(d.getSeconds())}`; $('#now').textContent=s; }
   setInterval(tickNow, 1000); tickNow();
+
+  // ===== 默认“时间表”和“阶段周计划”数据（只要不存在就自动写入，不覆盖已有） =====
+  const defaultTT = [
+    {time:'07:30–08:00', title:'英语热身（词汇/朗读）'},
+    {time:'08:00–10:30', title:'数学攻坚（计算+难题，番茄 50/10 ×3）'},
+    {time:'10:45–12:00', title:'专业课Ⅰ（信号为主）'},
+    {time:'12:00–13:20', title:'午餐 + 休息20min'},
+    {time:'13:30–15:00', title:'英语阅读/翻译（分项）'},
+    {time:'15:10–15:50', title:'政治选择题（1000题）'},
+    {time:'16:00–17:15', title:'健身房/肩部康复'},
+    {time:'17:45–18:15', title:'晚餐'},
+    {time:'19:00–21:00', title:'专业课Ⅱ或数学二轮'},
+    {time:'21:00–21:30', title:'英语作文/政治背诵'},
+    {time:'21:30–22:00', title:'复盘卡（错题3条/收获3条/明日3事）'}
+  ];
+
+  const phases = [
+    {name:'阶段1｜强化夯实', weeks:4, goals:{
+      math:'《1000题》A/B 每日≈13题；每周周测30题',
+      eng:'长难句 20句/周；阅读 6篇/周；作文素材 2篇/周',
+      pro:'信号：卷积/系统响应等每章10–20题；数电：组合→时序逻辑',
+      pol:'《1000题》第一遍：50题/日 ×5天'
+    }},
+    {name:'阶段2｜二刷与专题突破', weeks:4, goals:{
+      math:'《1000题》B/C + 专题讲义速刷；每周加一次180min仿真',
+      eng:'分项刷题（阅读/完形/新题型）；周末整卷 1 套',
+      pro:'信号：傅里叶/拉氏/采样/滤波；数电：时序/时钟/综合题',
+      pol:'《1000题》第二遍 + 主观题框架'
+    }},
+    {name:'阶段3｜真题主攻', weeks:4, goals:{
+      math:'整年真题 每周 2 套（配订正与再解）',
+      eng:'真题整套 每周 1–2 套；作文 A/B 模板各写 1篇',
+      pro:'3天一套类真题 + 2天剖析；每周一次综合大题仿真',
+      pol:'选择题第三遍 + 背诵节律启动'
+    }},
+    {name:'阶段4｜模拟拔高', weeks:4, goals:{
+      math:'周末全真；工作日强订正+薄弱专题回炉',
+      eng:'作文模板定稿，日演练',
+      pro:'错题清零 + 专题要领卡',
+      pol:'时政/主观题三轮背诵'
+    }},
+    {name:'阶段5｜冲刺查缺', weeks:3, goals:{
+      math:'只做错题二次订正 + 高频题型滚动',
+      eng:'作文每日快写 1 篇',
+      pro:'类真题轻量维护',
+      pol:'背诵每日三遍（早/午/晚）'
+    }}
+  ];
+
+  function ensureDefaults(){
+    // exam date 默认 2025-12-21；不覆盖已设置
+    if(!store.get('examDate', null)){ store.set('examDate', '2025-12-21'); }
+    if(store.get('goalMin', null)==null){ store.set('goalMin', 180); }
+    if(!store.get('timetable', null)){ store.set('timetable', defaultTT); }
+    if(!store.get('phaseWeeks', null)){
+      const weeks = [];
+      let cur = monday(new Date()); // 从本周一开始顺排 19 周
+      phases.forEach(ph=>{
+        for(let i=0;i<ph.weeks;i++){
+          const s = new Date(cur);
+          const e = addDays(cur, 6);
+          weeks.push({idx: weeks.length+1, phase: ph.name, start: ymd(s), end: ymd(e), goals: ph.goals});
+          cur = addDays(cur, 7);
+        }
+      });
+      store.set('phaseWeeks', weeks);
+      store.set('curWeekIdx', 1);
+    }
+  }
+  ensureDefaults();
 
   // ===== 初试日期 & 倒计时 =====
   const examDateInput = $('#examDate');
@@ -435,7 +784,11 @@
   };
   $('#cfgWork').value = cfg.work; $('#cfgShort').value = cfg.short; $('#cfgLong').value = cfg.long; $('#cfgEvery').value = cfg.every;
   ['cfgWork','cfgShort','cfgLong','cfgEvery'].forEach(id=>{
-    $('#'+id).addEventListener('change',()=>{ cfg.work=+$('#cfgWork').value; cfg.short=+$('#cfgShort').value; cfg.long=+$('#cfgLong').value; cfg.every=+$('#cfgEvery').value; store.set('cfg_work',cfg.work); store.set('cfg_short',cfg.short); store.set('cfg_long',cfg.long); store.set('cfg_every',cfg.every); if(state.mode==='work') state.left=cfg.work*60; renderPomodoro(); });
+    $('#'+id).addEventListener('change',()=>{
+      cfg.work=+$('#cfgWork').value; cfg.short=+$('#cfgShort').value; cfg.long=+$('#cfgLong').value; cfg.every=+$('#cfgEvery').value;
+      store.set('cfg_work',cfg.work); store.set('cfg_short',cfg.short); store.set('cfg_long',cfg.long); store.set('cfg_every',cfg.every);
+      if(state.mode==='work') state.left=cfg.work*60; renderPomodoro();
+    });
   })
 
   const state = { mode: 'work', left: cfg.work*60, running: false, timer: null, cycle: store.get('cycle',1) };
@@ -448,7 +801,7 @@
     $('#time').textContent = `${fmt2(Math.floor(state.left/60))}:${fmt2(Math.floor(state.left%60))}`;
     $('#modeLabel').textContent = state.mode==='work'?'专注模式':(state.mode==='short'?'短休模式':'长休模式');
     $('#cycleInfo').textContent = `第 ${state.cycle} 轮`;
-    $$('.modes .btn').forEach(b=>{ b.classList.toggle('pill','pill'); b.classList.toggle('active', b.dataset.mode===state.mode); });
+    $$('.modes .btn').forEach(b=>{ b.classList.toggle('active', b.dataset.mode===state.mode); });
   }
   function tick(){ if(!state.running) return; state.left--; if(state.left<=0){
       completeSession(); sounds.beep(); nextMode();
@@ -528,7 +881,7 @@
         <button class="btn icon" data-act="del">🗑</button>
       </div>`;
     // events
-    el.querySelector('input').onchange = (e)=>{ updateTask(t.id,{done:e.target.checked}); if(e.target.checked){ logToday(0,0); // 刷新今日进度
+    el.querySelector('input').onchange = (e)=>{ updateTask(t.id,{done:e.target.checked}); if(e.target.checked){ logToday(0,0);
         const lg = store.get('log_'+todayKey(),{min:0,pom:0,tasks:0}); lg.tasks=(lg.tasks||0)+1; store.set('log_'+todayKey(),lg); updateTodayProgress(); drawCharts(); }
     };
     el.querySelector('[data-act="del"]').onclick=()=> removeTask(t.id);
@@ -542,7 +895,7 @@
   }
   function saveOrder(){ const ids=[...$('#taskList').children].map(n=>n.dataset.id); tasks.sort((a,b)=> ids.indexOf(a.id)-ids.indexOf(b.id)); store.set('tasks', tasks); }
   function editTask(t){ const nv = prompt('修改任务内容', t.title); if(nv!==null){ updateTask(t.id,{title:nv}); }}
-  function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+  function escapeHtml(s){ return s.replace(/[&<>\"']/g, m=>({\"&\":\"&amp;\",\"<\":\"&lt;\",\">\":\"&gt;\",\"\\\"\":\"&quot;\",\"'\":\"&#39;\"}[m])); }
 
   // 新增任务
   $('#addTask').onclick=()=> doAdd();
@@ -612,7 +965,7 @@
   function renderCards(){ const box=$('#vCards'); box.innerHTML=''; vocabs.forEach(v=>{ const c=document.createElement('div'); c.className='card'; c.innerHTML=`<div class="word">${escapeHtml(v.w)}</div><div class="mean">${escapeHtml(v.m)}</div><div class="row" style="justify-content:center; margin-top:6px"><button class="btn icon" data-act="del">🗑</button></div>`; c.querySelector('[data-act="del"]').onclick=()=>{ vocabs=vocabs.filter(x=>x.id!==v.id); saveVocabs(); }; box.appendChild(c); }); }
   renderCards();
 
-  // 简易测验（SM-2 的极简影子：认识→延后更久；不认识→尽快复习）
+  // 简易测验（SM-2 极简影子）
   let quizQ=[], qi=0, showBack=false;
   function startQuiz(){ quizQ = vocabs.slice().filter(v=> v.due <= Date.now()).sort(()=>Math.random()-.5); if(quizQ.length===0) quizQ=vocabs.slice().sort(()=>Math.random()-.5); qi=0; showBack=false; $('#quizBox').hidden=false; nextQ(); }
   function nextQ(){ if(quizQ.length===0){ $('#quizBox').hidden=true; return; } const v=quizQ[qi%quizQ.length]; $('#qFront').textContent=v.w; $('#qBack').textContent=v.m; $('#qBack').hidden=true; $('#qMeta').textContent=`${(qi%quizQ.length)+1} / ${quizQ.length}`; showBack=false; }
@@ -620,7 +973,7 @@
   $('#reveal').onclick=()=>{ $('#qBack').hidden = !showBack; showBack = !showBack; };
   $('#know').onclick=()=> score(5);
   $('#dont').onclick=()=> score(2);
-  function score(q){ const v=quizQ[qi%quizQ.length]; // 极简：认识→延后2-4天；不认识→10-60分钟
+  function score(q){ const v=quizQ[qi%quizQ.length];
     const addMs = (q>=4) ? (86400000 * (2 + Math.random()*2)) : (600000 * (1 + Math.random()*5));
     v.due = Date.now() + addMs; saveVocabs(); qi++; if(qi>=quizQ.length) { qi=0; quizQ=quizQ.filter(x=> x.due<=Date.now()); if(quizQ.length===0){ $('#quizBox').hidden=true; return; } }
     nextQ();
@@ -658,6 +1011,84 @@
   renderLinks();
   $('#addLink').onclick=()=>{ const t=$('#linkTitle').value.trim(); const u=$('#linkUrl').value.trim(); if(!t||!u) return; links.push({id:crypto.randomUUID(), title:t, url:u}); store.set('links',links); renderLinks(); $('#linkTitle').value=''; $('#linkUrl').value=''; };
 
+  // ===== 阶段周计划 & 时间表：渲染与交互 =====
+  function parseYMD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); }
+  function cnRange(a,b){ const A=parseYMD(a), B=parseYMD(b); return `${A.getMonth()+1}/${A.getDate()}–${B.getMonth()+1}/${B.getDate()}`; }
+
+  function renderWeekPlan(){
+    const ws = store.get('phaseWeeks', []);
+    if(!ws.length) return;
+    let idx = clamp(store.get('curWeekIdx',1), 1, ws.length);
+    store.set('curWeekIdx', idx);
+    const w = ws[idx-1];
+    $('#phaseLabel').textContent = w.phase;
+    $('#wkLabel').textContent = `第 ${w.idx} 周 · ${cnRange(w.start, w.end)}`;
+
+    const g = w.goals;
+    $('#wkGoals').innerHTML = [
+      `<li><b>数学</b>：${g.math}</li>`,
+      `<li><b>英语</b>：${g.eng}</li>`,
+      `<li><b>专业课</b>：${g.pro}</li>`,
+      `<li><b>政治</b>：${g.pol}</li>`
+    ].join('');
+  }
+
+  function renderTimetable(){
+    const tt = store.get('timetable', []);
+    const html = tt.map(b=>`<div class="tt-row"><div class="tt-time">${b.time}</div><div>${escapeHtml(b.title)}</div></div>`).join('');
+    $('#ttBox').innerHTML = html;
+  }
+
+  // 绑定按钮
+  const wkPrev = document.getElementById('wkPrev');
+  const wkNext = document.getElementById('wkNext');
+  if(wkPrev && wkNext){
+    wkPrev.onclick = ()=>{ const n = clamp(store.get('curWeekIdx',1)-1, 1, store.get('phaseWeeks',[]).length); store.set('curWeekIdx', n); renderWeekPlan(); };
+    wkNext.onclick = ()=>{ const n = clamp(store.get('curWeekIdx',1)+1, 1, store.get('phaseWeeks',[]).length); store.set('curWeekIdx', n); renderWeekPlan(); };
+  }
+
+  // 一键下发到待办（按“工作日常规+周末例行”的模板分配截止日）
+  const pushWeekBtn = document.getElementById('pushWeek');
+  if(pushWeekBtn){ pushWeekBtn.onclick = ()=> dispatchWeek(store.get('curWeekIdx',1)); }
+
+  const pushAllBtn = document.getElementById('pushAll');
+  if(pushAllBtn){ pushAllBtn.onclick = ()=>{
+    const ws = store.get('phaseWeeks', []);
+    if(!ws.length) return;
+    ws.forEach(w=> dispatchWeek(w.idx, false));
+    alert('已生成全部 19 周的待办清单（带各周截止日）。');
+    renderTasks();
+  };}
+
+  function dispatchWeek(idx, showAlert=true){
+    const ws = store.get('phaseWeeks', []);
+    if(!ws.length) return;
+    const w = ws[clamp(idx,1,ws.length)-1];
+    const s = parseYMD(w.start);
+    const due = i => ymd(new Date(s.getFullYear(), s.getMonth(), s.getDate()+i));
+    // 基础模板：周一至周五“日常四件事”，周六“周测/素材/仿真/整理”，周日“复盘/订正/下周三事”
+    const pack = [
+      // 周一~周五
+      ...[0,1,2,3,4].flatMap(i=>[
+        {t:`数学 · 本周配额（日常13题）`, s:'数学一', d:due(i), p:'P1'},
+        {t:`英语 · 阅读/长难句分项（45–60min）`, s:'英语一', d:due(i)},
+        {t:`政治 · 《1000题》选择 50 题`, s:'政治', d:due(i)},
+        {t:`专业课 · ${w.idx%2?'信号与系统':'数字电路'} 训练（10–20题）`, s:(w.idx%2?'信号与系统':'数字电路'), d:due(i)}
+      ]),
+      // 周六
+      {t:`数学 · 周测 30 题（限时 60min）`, s:'数学一', d:due(5), p:'P1'},
+      {t:`英语 · 作文素材 2 篇（抄写+复述）`, s:'英语一', d:due(5)},
+      {t:`专业课 · 综合大题仿真（90min）`, s:(w.idx%2?'信号与系统':'数字电路'), d:due(5), est:90},
+      {t:`政治 · 错题整理（40min）`, s:'政治', d:due(5), est:40},
+      // 周日
+      {t:`周复盘：错题TOP5重做 + 得失总结（60min）`, s:'其他', d:due(6), est:60},
+      {t:`错题订正回炉（数学/专业课 60min）`, s:'其他', d:due(6), est:60},
+      {t:`下周三件大事规划（20min）`, s:'其他', d:due(6), est:20}
+    ];
+    pack.forEach(x=> addTask({ id:crypto.randomUUID(), title:x.t, subject:x.s, due:x.d, pri:x.p||'P2', est:x.est||25, done:false, createdAt:Date.now() }));
+    if(showAlert) { alert(`已生成：第 ${w.idx} 周（${cnRange(w.start,w.end)}）的待办清单`); }
+  }
+
   // ===== 备份 / 导入 / 打印 / 恢复 =====
   $('#exportBtn').onclick=()=>{ const data = store.all(); const blob=new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`kaoyan-data-${todayKey()}.json`; a.click(); URL.revokeObjectURL(a.href); };
   $('#importFile').addEventListener('change', (e)=>{
@@ -682,13 +1113,21 @@
 
   // ===== 可访问性：键盘快捷键 =====
   document.addEventListener('keydown', (e)=>{
-    if(e.target.matches('input, textarea, [contenteditable="true"]')) return;
+    if(e.target.matches('input, textarea, [contenteditable=\"true\"]')) return;
     if(e.key.toLowerCase()==='n'){ $('#taskTitle').focus(); }
     if(e.code==='Space'){ e.preventDefault(); $('#startPause').click(); }
   });
 
   // 初始渲染修正
-  setTimeout(()=>{ drawCharts(); updateKPIs(); updateTodayProgress(); }, 200);
+  setTimeout(()=>{ 
+    drawCharts(); updateKPIs(); updateTodayProgress();
+    renderWeekPlan(); renderTimetable();
+  }, 200);
   </script>
 </body>
 </html>
+"""
+path = "/mnt/data/kaoyan_workbench_v2.html"
+with open(path, "w", encoding="utf-8") as f:
+    f.write(html)
+path
