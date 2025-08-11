@@ -49,6 +49,57 @@
   .day:hover{background:#fafafa}
   .day.today{outline:3px solid rgba(99,91,255,.25)}
   .day.checked{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+  /* 顶部栏玻璃质感 */
+.glass{background:rgba(255,255,255,.75);backdrop-filter:saturate(180%) blur(10px)}
+.cal-head{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 12px;border-radius:14px;border:1px solid var(--border)}
+.cal-nav{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:pointer}
+.cal-nav:hover{background:#fafafa}
+.month-title{font:600 20px/1.2 system-ui;cursor:pointer;padding:6px 10px;border-radius:8px}
+.month-title:hover{background:#f3f4f6}
+.cal-summary{margin:10px 2px;color:var(--muted)}
+
+.cal-week{margin-top:8px;color:var(--muted);font-weight:600}
+.cal-week .sun{color:#e11d48}
+.cal-week .sat{color:#2563eb}
+
+/* 更“苹果”的网格 */
+.cal-grid.pretty{gap:8px;margin-top:8px}
+.day{
+  position:relative; aspect-ratio:1;
+  border:1px solid var(--border); border-radius:14px;
+  background:#fff; display:flex; align-items:flex-start; justify-content:flex-end;
+  padding:8px; font-weight:600; color:#374151;
+  transition:.2s ease; box-shadow:0 1px 0 rgba(0,0,0,.02)
+}
+.day:hover{transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,.06)}
+.day .num{position:absolute; top:6px; right:8px}
+.day .dots{position:absolute; left:0; right:0; bottom:8px; display:flex; gap:6px; justify-content:center}
+
+/* 状态 */
+.day.dim{color:#9ca3af;background:#fbfbfd}
+.day.today{outline:2px solid #fda4af; outline-offset:2px}
+.dot{width:8px;height:8px;border-radius:50%}
+.dot.check{background:#10b981}
+.dot.note{background:#3b82f6}
+
+/* 底部编辑面板 */
+.day-panel{
+  margin-top:12px; border:1px solid var(--border); border-radius:12px; padding:12px;
+  background:#fff
+}
+
+/* 月份选择器 */
+.month-picker{
+  margin:10px 0; display:flex; gap:8px; align-items:center
+}
+.month-picker input[type="month"]{
+  max-width:180px
+}
+
+/* 过渡进入 */
+.cal-grid.pretty .day{animation:pop .18s ease}
+@keyframes pop{from{transform:scale(.98);opacity:.7}to{transform:scale(1);opacity:1}}
+
 </style>
 </head>
 <body>
@@ -117,21 +168,40 @@
   </section>
 
   <!-- 日历 -->
-  <section id="view-calendar" class="card">
-    <div class="cal-head">
-      <h2 style="margin:0">打卡日历</h2>
-      <div class="row">
-        <button class="btn" id="cal-prev">上一月</button>
-        <button class="btn" id="cal-today">今月</button>
-        <button class="btn" id="cal-next">下一月</button>
+ <section id="view-calendar" class="card">
+  <div class="cal-head glass">
+    <button class="cal-nav" id="cal-prev" aria-label="上一月">‹</button>
+    <div class="month-title" id="cal-title" title="点击选择月份"></div>
+    <button class="cal-nav" id="cal-next" aria-label="下一月">›</button>
+  </div>
+
+  <div class="cal-summary" id="cal-summary"></div>
+
+  <!-- 快速月份选择器（点击标题出现） -->
+  <div class="month-picker" id="month-picker" hidden>
+    <input type="month" id="month-input" />
+    <button class="btn" id="month-apply">跳转</button>
+  </div>
+
+  <div class="cal-week">
+    <div class="sun">日</div><div>一</div><div>二</div><div>三</div>
+    <div>四</div><div>五</div><div class="sat">六</div>
+  </div>
+  <div class="cal-grid pretty" id="cal-grid" aria-live="polite"></div>
+
+  <!-- 底部编辑面板（备注） -->
+  <div class="day-panel" id="day-panel" hidden>
+    <div class="row" style="justify-content:space-between">
+      <div class="muted" id="panel-date"></div>
+      <div>
+        <button class="btn" id="panel-check">切换打卡</button>
+        <button class="btn" id="panel-close">关闭</button>
       </div>
     </div>
-    <div class="muted" id="cal-summary" style="margin-top:6px"></div>
-    <div class="cal-week">
-      <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
-    </div>
-    <div class="cal-grid" id="cal-grid"></div>
-  </section>
+    <textarea id="panel-note" rows="4" placeholder="给这一天写点备注…"></textarea>
+    <div class="muted" style="text-align:right">自动保存</div>
+  </div>
+</section>
 
 </main>
 
@@ -241,16 +311,138 @@ noteEl.addEventListener('input', ()=>{
 });
 
 /* ============= 打卡日历 ============= */
-let calData = store.get("calendar.checkin", {}); // {'YYYY-MM-DD': true}
+<script>
+/* ============= 打卡日历（精致版） ============= */
+let calData  = store.get("calendar.checkin", {});   // 打卡：{'YYYY-MM-DD': true}
+let calNotes = store.get("calendar.notes",   {});   // 备注：{'YYYY-MM-DD': 'text'}
 let ym = store.get("calendar.ym", {y:new Date().getFullYear(), m:new Date().getMonth()}); // m:0-11
-const grid=$("#cal-grid"), summary=$("#cal-summary");
+
+const grid=$("#cal-grid"), summary=$("#cal-summary"), titleEl=$("#cal-title");
+const picker=$("#month-picker"), monthInput=$("#month-input"), monthApply=$("#month-apply");
+const panel=$("#day-panel"), panelDate=$("#panel-date"), panelNote=$("#panel-note"), panelClose=$("#panel-close"), panelCheck=$("#panel-check");
+
+function setYM(y,m){ ym={y,m}; store.set("calendar.ym", ym); }
+function firstDay(y,m){ return new Date(y,m,1); }
+function daysIn(y,m){ return new Date(y,m+1,0).getDate(); }
+
 function renderCal(){
   store.set("calendar.ym", ym);
   grid.innerHTML="";
   const today = new Date();
-  const first = new Date(ym.y, ym.m, 1);
+  const first = firstDay(ym.y, ym.m);
   const start = first.getDay();
-  const days = new Date(ym.y, ym.m+1, 0).getDate();
+  const days  = daysIn(ym.y, ym.m);
+
+  // 标题
+  titleEl.textContent = `${ym.y} 年 ${ym.m+1} 月`;
+  monthInput.value = `${ym.y}-${pad(ym.m+1)}`;
+
+  // 统计
+  let monthly=0, streak=0;
+  for(let d=1; d<=days; d++){ if(calData[iso(new Date(ym.y, ym.m, d))]) monthly++; }
+  let ptr = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  while(calData[iso(ptr)]){ streak++; ptr.setDate(ptr.getDate()-1); }
+  summary.textContent = `本月已打卡 ${monthly} 天 · 已连续 ${streak} 天 · 今天 ${calData[iso(today)]?'已打卡':'未打卡'}`;
+
+  // 生成 6 行 * 7 列（固定高度）
+  const total = 42; // 6*7
+  const prevDays = daysIn(ym.y, ym.m-1);
+  for(let i=0;i<total;i++){
+    const cell=document.createElement('button'); cell.className='day';
+    const dnum = i - start + 1; // 可能 <1（上个月）或 >days（下个月）
+    let d, dim=false;
+    if(dnum<1){ // 上月
+      d = new Date(ym.y, ym.m-1, prevDays + dnum); dim=true;
+    }else if(dnum>days){ // 下月
+      d = new Date(ym.y, ym.m+1, dnum-days); dim=true;
+    }else{ // 本月
+      d = new Date(ym.y, ym.m, dnum);
+    }
+    const key=iso(d);
+
+    // 数字
+    const num=document.createElement('div'); num.className='num'; num.textContent=d.getDate(); cell.appendChild(num);
+
+    // 状态点
+    const dots=document.createElement('div'); dots.className='dots';
+    if(calData[key]) dots.appendChild(Object.assign(document.createElement('div'),{className:'dot check'}));
+    if(calNotes[key] && calNotes[key].trim()) dots.appendChild(Object.assign(document.createElement('div'),{className:'dot note'}));
+    cell.appendChild(dots);
+
+    // 状态样式
+    if(dim) cell.classList.add('dim');
+    if(iso(d)===iso(new Date())) cell.classList.add('today');
+
+    // 交互：单击=打开编辑；双击=直接切换打卡
+    let clickTimer=null;
+    cell.onclick=()=>{
+      if(clickTimer){ // double
+        clearTimeout(clickTimer); clickTimer=null;
+        calData[key]=!calData[key]; store.set("calendar.checkin",calData); renderCal();
+      }else{
+        clickTimer=setTimeout(()=>{ openPanel(key); clickTimer=null; }, 200);
+      }
+    };
+
+    grid.appendChild(cell);
+  }
+}
+
+function openPanel(key){
+  panel.hidden=false;
+  panel.dataset.key=key;
+  panelDate.textContent = key;
+  panelNote.value = calNotes[key] || '';
+  panelCheck.textContent = calData[key] ? '取消打卡' : '打卡';
+  panelNote.focus();
+}
+panelClose.onclick=()=> panel.hidden=true;
+panelCheck.onclick=()=>{
+  const key=panel.dataset.key;
+  calData[key]=!calData[key];
+  store.set("calendar.checkin", calData);
+  panelCheck.textContent = calData[key] ? '取消打卡' : '打卡';
+  renderCal();
+};
+panelNote.addEventListener('input', ()=>{
+  const key=panel.dataset.key;
+  calNotes[key]=panelNote.value;
+  store.set("calendar.notes", calNotes);
+  // 点存在与否会影响小蓝点
+  renderCal();
+});
+
+$("#cal-prev").onclick=()=>{ const d=new Date(ym.y, ym.m-1, 1); setYM(d.getFullYear(), d.getMonth()); renderCal(); };
+$("#cal-next").onclick=()=>{ const d=new Date(ym.y, ym.m+1, 1); setYM(d.getFullYear(), d.getMonth()); renderCal(); };
+$("#cal-title").onclick=()=>{ picker.hidden = !picker.hidden; };
+
+monthApply.onclick=()=>{
+  const val=monthInput.value; // yyyy-mm
+  if(!val) return;
+  const [y,m]=val.split('-').map(Number);
+  setYM(y, m-1); picker.hidden=true; renderCal();
+};
+
+// 键盘左右翻月
+document.addEventListener('keydown',e=>{
+  if(currentTab!=='calendar') return;
+  if(e.key==='ArrowLeft'){ $("#cal-prev").click(); }
+  if(e.key==='ArrowRight'){ $("#cal-next").click(); }
+});
+
+// 移动端滑动切月
+let touchX=null;
+grid.addEventListener('touchstart',e=>{ touchX=e.touches[0].clientX; },{passive:true});
+grid.addEventListener('touchend',e=>{
+  if(touchX==null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  if(Math.abs(dx)>40){ (dx<0?$("#cal-next"):$("#cal-prev")).click(); }
+  touchX=null;
+},{passive:true});
+
+renderCal();
+</script>
+
 
   // 统计
   let monthly=0, streak=0;
