@@ -2,502 +2,139 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>学习效率助手 · 日历打卡</title>
-
-  <!-- ========= 视觉样式（Apple 风格） ========= -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>学习效率助手（简洁版）</title>
   <style>
     :root{
-      --bg-top:#fbfcff;
-      --bg-bottom:#f0f3f9;
-      --card:#ffffff;
+      --bg:#f5f7fb;
+      --card:#fff;
       --text:#0a0a0a;
       --muted:#6b7280;
-
-      --primary:#007aff;   /* iOS 蓝 */
-      --success:#34c759;   /* iOS 绿 */
-      --danger:#ff3b30;
-
+      --primary:#1677ff;
       --border:#e5e7eb;
-      --shadow:0 8px 24px rgba(0,0,0,.08);
-      --shadow-strong:0 24px 60px rgba(0,0,0,.22);
-      --radius-lg:16px;
-      --radius-md:12px;
-      --radius-sm:10px;
+      --shadow:0 8px 24px rgba(0,0,0,.06);
+      --radius:14px;
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0;
-      color:var(--text);
-      background:linear-gradient(180deg,var(--bg-top) 0%, var(--bg-bottom) 100%);
-      font:16px/1.6 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,Segoe UI Emoji;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+      margin:0;background:var(--bg);color:var(--text);
+      font:16px/1.6 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial;
+      -webkit-font-smoothing:antialiased
     }
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+    h1{margin:0;font-size:20px}
+    /* 顶部导航（四个按钮） */
+    .tabs{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{
+      appearance:none;border:1px solid var(--border);background:var(--card);
+      padding:8px 14px;border-radius:999px;cursor:pointer;color:#111;transition:.15s;
+    }
+    .tab:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+    .tab.active{background:var(--primary);border-color:var(--primary);color:#fff}
 
-    .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    h1{margin:0;font-weight:700;font-size:22px;letter-spacing:.2px}
+    /* 页面容器 */
+    .pages{margin-top:8px}
+    .page{
+      display:none;background:var(--card);border:1px solid var(--border);
+      border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;
+      min-height:420px; /* 给点高度避免跳动 */
+    }
+    .page.active{display:block}
 
-    /* 按钮 */
-    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .btn{
-      appearance:none;
-      border:1px solid var(--border);
-      padding:9px 14px;
-      border-radius:var(--radius-sm);
-      background:var(--card);
-      color:var(--text);
-      cursor:pointer;
-      transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
-    }
-    .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
-    .btn:active{transform:translateY(0)}
-    .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
-    .btn.success{background:var(--success);border-color:var(--success);color:#fff}
-    .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
-    .btn.ghost{background:#f7f8fc}
-    .btn.small{padding:6px 10px;font-size:14px}
-
-    /* 月份栏 */
-    .monthbar{
-      display:flex;align-items:center;gap:10px;justify-content:space-between;
-      padding:14px 16px;margin-bottom:10px;border-radius:var(--radius-lg);
-      background:var(--card);box-shadow:var(--shadow);border:1px solid var(--border)
-    }
-    .monthbar h2{margin:0;font-size:18px;font-weight:700}
-    .monthbar-left,.monthbar-right{display:flex;gap:8px;align-items:center}
-
-    /* 星期标题 + 日期网格 */
-    .grid{display:grid;gap:8px}
-    .weekday{
-      color:var(--muted);text-align:center;font-size:12px;padding:4px 0;
-      user-select:none
-    }
-
-    /* 日期卡片 */
-    .day{
-      background:var(--card);
-      border-radius:var(--radius-lg);
-      min-height:110px;
-      display:flex;flex-direction:column;padding:10px;cursor:pointer;
-      border:1px solid var(--border);
-      transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
-    }
-    .day:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-    .day.out{opacity:.45}
-    .day-head{display:flex;align-items:center;justify-content:space-between}
-    .date-num{font-weight:700}
-    .today .date-num{
-      color:#fff;background:var(--primary);
-      border-radius:8px;padding:2px 6px
-    }
-    .badges{display:flex;align-items:center;gap:6px}
-    .pill{
-      border-radius:999px;border:1px solid #c9ecd3;
-      background:#eaf6ee;color:var(--success);
-      font-size:12px;padding:2px 8px;user-select:none
-    }
-    .dots{margin-top:auto;display:flex;gap:4px;align-items:center}
-    .dot{
-      width:8px;height:8px;border-radius:50%;
-      background:var(--muted);opacity:.35
-    }
-    .dot.done{opacity:1}
-
-    .footnote{color:var(--muted);font-size:12px;margin-top:14px}
-
-    /* 弹窗（遮罩 + 底板） */
-    .mask{
-      position:fixed;inset:0;background:rgba(0,0,0,.28);
-      display:none;align-items:center;justify-content:center;padding:16px;z-index:20
-    }
-    .mask.show{display:flex}
-    .sheet{
-      width:min(620px,96vw);
-      background:var(--card);
-      border-radius:var(--radius-lg);
-      padding:18px;
-      box-shadow:var(--shadow-strong);
-      border:1px solid var(--border);
-      max-height:92vh;overflow:auto
-    }
-    .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px}
-    .sheet-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-    .sheet-title h3{margin:0;font-size:19px}
-    .date-sub{color:var(--muted);font-size:13px}
-    .close{border:1px solid var(--border);background:#f1f5f9;border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer}
-
-    /* 面板内容 */
-    .section-title{font-weight:700;margin:16px 0 8px 0}
-    .row{display:flex;align-items:center;gap:10px;justify-content:space-between}
-    input[type="text"]{
-      width:100%;border:1px solid var(--border);padding:10px 12px;border-radius:var(--radius-sm);outline:none;background:#fff
-    }
-    input[type="text"]:focus{box-shadow:0 0 0 3px rgba(0,122,255,.15)}
-    .hint{color:var(--muted);font-size:12px;margin-top:6px}
-
-    /* 任务列表 */
-    ul.tasks{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
-    .task{
-      display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);
-      padding:10px;border-radius:var(--radius-md)
-    }
-    .task.done{opacity:.6}
-    .task .t-text{flex:1}
-    .task .remove{
-      margin-left:auto;border:1px solid var(--border);border-radius:var(--radius-sm);
-      padding:4px 8px;background:#f8fafc;cursor:pointer
-    }
-
-    /* 自适应 */
-    @media (max-width:640px){
-      .day{min-height:92px;padding:8px}
-      .btn{padding:8px 12px}
-      .monthbar{flex-wrap:wrap;gap:8px}
-    }
+    /* 只是示例里的卡片样式，可删 */
+    .placeholder{padding:16px;border:1px dashed var(--border);border-radius:12px;background:#fafbff;color:var(--muted)}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>学习效率助手 · 日历打卡</h1>
-      <div class="toolbar">
-        <button class="btn" id="btnToday">今天</button>
-        <button class="btn ghost" id="btnExport">导出</button>
-        <label class="btn ghost" for="fileImport" title="从 JSON 导入数据">导入</label>
-        <input id="fileImport" type="file" accept="application/json" hidden>
-        <button class="btn danger" id="btnClear">清空数据</button>
-      </div>
+      <h1>学习效率助手（简洁版）</h1>
+      <nav class="tabs" aria-label="主功能">
+        <button class="tab" data-page="tasks">任务</button>
+        <button class="tab" data-page="focus">专注</button>
+        <button class="tab" data-page="notes">便签</button>
+        <button class="tab" data-page="calendar">打卡日历</button>
+      </nav>
     </header>
 
-    <div class="monthbar">
-      <div class="monthbar-left">
-        <button class="btn" id="prevMonth">上月</button>
-        <button class="btn" id="nextMonth">下月</button>
-      </div>
-      <h2 id="ym">2025 年 8 月</h2>
-      <div class="monthbar-right">
-        <button class="btn primary" id="goToday">回到今天</button>
-      </div>
-    </div>
+    <main class="pages">
+      <!-- 任务页 -->
+      <section id="page-tasks" class="page">
+        <!-- 把你的「任务清单」整块 HTML 放到这里 -->
+        <div class="placeholder">这里放「任务清单」页面内容</div>
+      </section>
 
-    <!-- 星期标题：周日开头 -->
-    <div class="grid" id="weekHead" style="grid-template-columns:repeat(7,1fr)"></div>
+      <!-- 专注/番茄钟页 -->
+      <section id="page-focus" class="page">
+        <!-- 把你的「番茄钟」整块 HTML（设置/计时/开始暂停等）放到这里 -->
+        <div class="placeholder">这里放「专注（番茄钟）」页面内容</div>
+      </section>
 
-    <!-- 日期网格 -->
-    <div class="grid" id="calGrid" style="grid-template-columns:repeat(7,1fr)"></div>
+      <!-- 便签页 -->
+      <section id="page-notes" class="page">
+        <!-- 把你的「便签」整块 HTML（文本域、保存等）放到这里 -->
+        <div class="placeholder">这里放「便签」页面内容</div>
+      </section>
 
-    <p class="footnote">提示：数据仅保存在本地（localStorage）。可导出为 JSON 备份，或在任意设备导入使用。</p>
+      <!-- 打卡日历页 -->
+      <section id="page-calendar" class="page">
+        <!-- 把你的「日历打卡」整块 HTML（含顶部月份栏 + 日历网格 + 弹窗面板 + 对应脚本）放到这里 -->
+        <div class="placeholder">这里放「打卡日历」页面内容</div>
+      </section>
+    </main>
   </div>
 
-  <!-- 弹层面板 -->
-  <div class="mask" id="mask" aria-hidden="true">
-    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetDate">
-      <div class="sheet-head">
-        <div class="sheet-title">
-          <h3 id="sheetDate">8 月 8 日（周四）</h3>
-          <span class="date-sub" id="sheetISO">2025-08-08</span>
-        </div>
-        <button class="close" id="closeSheet" aria-label="关闭">关闭</button>
-      </div>
-
-      <div class="row">
-        <div>
-          <div style="font-weight:700">打卡</div>
-          <div class="hint">勾选后，该日期会在日历卡片显示绿色“已打卡”标签。</div>
-        </div>
-        <button class="btn success" id="toggleCheck">标记打卡</button>
-      </div>
-
-      <div class="section-title">当日任务</div>
-      <div class="row">
-        <input type="text" id="newTask" placeholder="输入任务内容，回车或点右侧“添加”…" />
-        <button class="btn primary" id="addTask">添加</button>
-      </div>
-
-      <ul class="tasks" id="taskList"></ul>
-      <div class="hint" id="progressText">完成度 0/0</div>
-    </div>
-  </div>
-
-  <!-- ========= 行为脚本 ========= -->
   <script>
-    (function(){
-      /* ---------- 工具 ---------- */
-      const $  = (sel, root=document) => root.querySelector(sel);
-      const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    // —— 页面切换逻辑（hash 路由 + 记住上次页面） ——
+    const TABS = Array.from(document.querySelectorAll('.tab'));
+    const PAGES = {
+      tasks:    document.getElementById('page-tasks'),
+      focus:    document.getElementById('page-focus'),
+      notes:    document.getElementById('page-notes'),
+      calendar: document.getElementById('page-calendar'),
+    };
+    const KEY_LAST = 'app.lastPage';
 
-      const STORE_KEY = 'calendarData.v1';
+    function activate(pageName){
+      // 切 Tab
+      TABS.forEach(btn => btn.classList.toggle('active', btn.dataset.page === pageName));
+      // 切 Page
+      Object.entries(PAGES).forEach(([name, el])=>{
+        el.classList.toggle('active', name === pageName);
+      });
+      // 写 hash + 记住
+      if(location.hash !== '#'+pageName) history.replaceState(null,'','#'+pageName);
+      localStorage.setItem(KEY_LAST, pageName);
 
-      function pad(n){ return n<10 ? '0'+n : ''+n }
-      function fmtISO(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()) }
-      const WEEK_ZH = ['日','一','二','三','四','五','六']; // 周日开头
-
-      function load(){
-        try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {} }catch{ return {} }
-      }
-      function save(data){ localStorage.setItem(STORE_KEY, JSON.stringify(data)) }
-
-      function escapeHTML(s){ return s.replace(/[&<>"]/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])) }
-
-      /* ---------- 全局状态 ---------- */
-      const state = {
-        view: new Date(),        // 当前视图的月份
-        selected: null,          // 弹窗当前选中的日期（Date）
-        data: load()             // { 'YYYY-MM-DD': { checked:boolean, tasks:[{text,done}] } }
-      };
-
-      /* ---------- 渲染 星期栏 ---------- */
-      (function renderWeekHead(){
-        const head = $('#weekHead');
-        head.innerHTML = '';
-        WEEK_ZH.forEach(w=>{
-          const div = document.createElement('div');
-          div.className = 'weekday';
-          div.textContent = w;
-          head.appendChild(div);
-        });
-      })();
-
-      /* ---------- 渲染 日历网格 ---------- */
-      const calGrid = $('#calGrid');
-      const ymTitle = $('#ym');
-
-      function renderCalendar(){
-        const y = state.view.getFullYear();
-        const m = state.view.getMonth();
-        ymTitle.textContent = `${y} 年 ${m+1} 月`;
-
-        // 本月第一天
-        const first = new Date(y, m, 1);
-
-        // 以周日为一周起点
-        const start = new Date(first);
-        start.setDate(1 - first.getDay());
-
-        // 共渲染 42 天（6 行 * 7 列）
-        calGrid.innerHTML = '';
-        for(let i=0;i<42;i++){
-          const d = new Date(start);
-          d.setDate(start.getDate()+i);
-
-          const iso = fmtISO(d);
-          const isOut   = d.getMonth() !== m;
-          const isToday = fmtISO(new Date()) === iso;
-          const info = state.data[iso] || { checked:false, tasks:[] };
-
-          const card = document.createElement('div');
-          card.className = `day${isOut?' out':''}${isToday?' today':''}`;
-          card.setAttribute('data-date', iso);
-
-          // 小圆点 = 任务完成度（最多显示 4 个点，已完成更深）
-          const total = info.tasks.length;
-          const done  = info.tasks.filter(t=>t.done).length;
-          const dotsCount = Math.max(0, Math.min(4, total || 0));
-          let dotsHTML = '';
-          for(let j=0;j<dotsCount;j++){
-            const isDone = j < done;
-            dotsHTML += `<span class="dot ${isDone?'done':''}"></span>`;
-          }
-
-          card.innerHTML = `
-            <div class="day-head">
-              <div class="date-num">${d.getDate()}</div>
-              <div class="badges">
-                ${ info.checked ? '<span class="pill">已打卡</span>' : '' }
-              </div>
-            </div>
-            <div class="dots">${dotsHTML}</div>
-          `;
-
-          card.addEventListener('click',()=>openDay(d));
-          calGrid.appendChild(card);
+      // 首次进入某页时做一次性初始化（避免日历多次初始化）
+      if(pageName === 'calendar' && !PAGES.calendar.dataset.inited){
+        PAGES.calendar.dataset.inited = '1';
+        if (typeof window.initCalendarOnce === 'function') {
+          // 如果你把日历脚本封装成 initCalendarOnce()，这里调用即可
+          window.initCalendarOnce();
         }
       }
+    }
 
-      /* ---------- 弹窗：打开 / 填充 / 交互 ---------- */
-      const mask       = $('#mask');
-      const sheetDate  = $('#sheetDate');
-      const sheetISO   = $('#sheetISO');
-      const toggleBtn  = $('#toggleCheck');
-      const taskList   = $('#taskList');
-      const newTaskInp = $('#newTask');
-      const progressTx = $('#progressText');
+    // 点击导航
+    TABS.forEach(btn=>{
+      btn.addEventListener('click', ()=> activate(btn.dataset.page));
+    });
 
-      function openDay(dateObj){
-        state.selected = new Date(dateObj);
+    // 支持浏览器前进/后退
+    window.addEventListener('hashchange', ()=>{
+      const name = (location.hash || '').slice(1);
+      if(PAGES[name]) activate(name);
+    });
 
-        const d   = state.selected;
-        const iso = fmtISO(d);
-        sheetDate.textContent = `${d.getMonth()+1} 月 ${d.getDate()} 日（周${WEEK_ZH[d.getDay()]}）`;
-        sheetISO.textContent  = iso;
-
-        fillDayPanel();
-        mask.classList.add('show');
-        mask.setAttribute('aria-hidden','false');
-        // 聚焦输入框
-        setTimeout(()=>newTaskInp.focus(), 50);
-      }
-
-      function currentDayInfo(){
-        const iso = fmtISO(state.selected);
-        if(!state.data[iso]){
-          state.data[iso] = { checked:false, tasks:[] };
-        }
-        return state.data[iso];
-      }
-
-      function fillDayPanel(){
-        const info = currentDayInfo();
-
-        // 打卡按钮
-        toggleBtn.textContent = info.checked ? '取消打卡' : '标记打卡';
-        toggleBtn.className = `btn ${info.checked ? '' : 'success'}`;
-
-        // 任务列表
-        taskList.innerHTML = '';
-        info.tasks.forEach((t, idx)=>{
-          const li = document.createElement('li');
-          li.className = `task ${t.done?'done':''}`;
-
-          li.innerHTML = `
-            <input type="checkbox" ${t.done ? 'checked' : ''} />
-            <div class="t-text">${escapeHTML(t.text)}</div>
-            <button class="remove">删除</button>
-          `;
-
-          // 勾选完成
-          const cb = $('input[type="checkbox"]', li);
-          cb.addEventListener('change', ()=>{
-            t.done = cb.checked;
-            save(state.data);
-            fillDayPanel();
-            renderCalendar();
-          });
-
-          // 删除任务
-          $('.remove', li).addEventListener('click', ()=>{
-            info.tasks.splice(idx,1);
-            save(state.data);
-            fillDayPanel();
-            renderCalendar();
-          });
-
-          taskList.appendChild(li);
-        });
-
-        // 完成度
-        const total = info.tasks.length;
-        const done  = info.tasks.filter(t=>t.done).length;
-        progressTx.textContent = `完成度 ${done}/${total}`;
-      }
-
-      // 打卡切换
-      toggleBtn.addEventListener('click', ()=>{
-        const info = currentDayInfo();
-        info.checked = !info.checked;
-        save(state.data);
-        fillDayPanel();
-        renderCalendar();
-      });
-
-      // 添加任务
-      function addTask(){
-        const text = newTaskInp.value.trim();
-        if(!text) return;
-        const info = currentDayInfo();
-        info.tasks.push({ text, done:false });
-        newTaskInp.value = '';
-        save(state.data);
-        fillDayPanel();
-        renderCalendar();
-      }
-      $('#addTask').addEventListener('click', addTask);
-      newTaskInp.addEventListener('keydown', e=>{
-        if(e.key==='Enter') addTask();
-      });
-
-      // 关闭面板
-      $('#closeSheet').addEventListener('click', closeSheet);
-      mask.addEventListener('click', e=>{
-        if(e.target===mask) closeSheet();
-      });
-      function closeSheet(){
-        mask.classList.remove('show');
-        mask.setAttribute('aria-hidden','true');
-      }
-
-      /* ---------- 顶部操作：月份导航 / 今天 ---------- */
-      $('#prevMonth').addEventListener('click', ()=>{
-        state.view.setMonth(state.view.getMonth()-1);
-        renderCalendar();
-      });
-      $('#nextMonth').addEventListener('click', ()=>{
-        state.view.setMonth(state.view.getMonth()+1);
-        renderCalendar();
-      });
-      $('#btnToday').addEventListener('click', ()=>{
-        state.view = new Date();
-        renderCalendar();
-        openDay(new Date());
-      });
-      $('#goToday').addEventListener('click', ()=>{
-        state.view = new Date();
-        renderCalendar();
-      });
-
-      /* ---------- 导出 / 导入 / 清空 ---------- */
-      $('#btnExport').addEventListener('click', ()=>{
-        const blob = new Blob([JSON.stringify(state.data,null,2)],{type:'application/json'});
-        const url  = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'calendar-backup.json';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      });
-
-      $('#fileImport').addEventListener('change', async (e)=>{
-        const file = e.target.files && e.target.files[0];
-        if(!file) return;
-        try{
-          const text = await file.text();
-          const json = JSON.parse(text);
-          if(typeof json === 'object' && json){
-            state.data = json;
-            save(state.data);
-            renderCalendar();
-            alert('导入成功！');
-          }else{
-            alert('文件格式不正确。');
-          }
-        }catch(err){
-          console.error(err);
-          alert('导入失败：不是有效的 JSON 文件。');
-        }finally{
-          e.target.value = '';
-        }
-      });
-
-      $('#btnClear').addEventListener('click', ()=>{
-        if(confirm('确定要清空所有本地数据吗？此操作不可撤销。')){
-          state.data = {};
-          save(state.data);
-          renderCalendar();
-          closeSheet();
-          alert('已清空。');
-        }
-      });
-
-      /* ---------- 首次渲染 ---------- */
-      renderCalendar();
+    // 进入页面时：hash 优先，其次记忆，最后默认“任务”
+    (function boot(){
+      const fromHash = (location.hash || '').slice(1);
+      const last = localStorage.getItem(KEY_LAST);
+      const target = PAGES[fromHash] ? fromHash : (PAGES[last] ? last : 'tasks');
+      activate(target);
     })();
   </script>
 </body>
