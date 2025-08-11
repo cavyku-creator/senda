@@ -168,39 +168,348 @@
   </section>
 
   <!-- 日历 -->
- <section id="view-calendar" class="card">
-  <div class="cal-head glass">
-    <button class="cal-nav" id="cal-prev" aria-label="上一月">‹</button>
-    <div class="month-title" id="cal-title" title="点击选择月份"></div>
-    <button class="cal-nav" id="cal-next" aria-label="下一月">›</button>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>学习效率助手 · 日历打卡</title>
+<style>
+  :root{
+    --bg:#f5f6f8;
+    --card:#fff;
+    --text:#0a0a0a;
+    --muted:#6b7280;
+    --primary:#007aff;     /* iOS 蓝 */
+    --success:#34c759;     /* iOS 绿 */
+    --border:#e5e7eb;
+    --shadow:0 8px 24px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,Segoe UI Emoji;
+    color:var(--text);
+    background:linear-gradient(180deg,#fbfcff 0%, #f0f3f9 100%);
+  }
+  .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  h1{margin:0;font-weight:700;font-size:22px;letter-spacing:.2px}
+  .toolbar{display:flex;gap:8px;align-items:center}
+  .btn{
+    border:1px solid var(--border);
+    padding:8px 12px;border-radius:10px;background:var(--card);
+    cursor:pointer;transition:all .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .monthbar{
+    display:flex;align-items:center;gap:10px;justify-content:space-between;
+    padding:14px 16px;margin-bottom:10px;border-radius:14px;background:var(--card);box-shadow:var(--shadow)
+  }
+  .monthbar h2{margin:0;font-size:18px;font-weight:700}
+  .grid{
+    display:grid;gap:8px;
+    grid-template-columns:repeat(7,1fr);
+  }
+  .weekday{color:var(--muted);text-align:center;font-size:12px;padding:4px 0}
+  .day{
+    background:var(--card);border-radius:14px;min-height:110px;
+    display:flex;flex-direction:column;padding:10px;cursor:pointer;
+    border:1px solid var(--border);transition:all .15s ease;
+  }
+  .day:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .day.out{opacity:.45}
+  .day-head{display:flex;align-items:center;justify-content:space-between}
+  .date-num{font-weight:700}
+  .today .date-num{
+    color:#fff;background:var(--primary);border-radius:8px;padding:2px 6px
+  }
+  .badges{display:flex;align-items:center;gap:6px}
+  .dot{
+    width:8px;height:8px;border-radius:50%;background:var(--muted);opacity:.45
+  }
+  .dot.done{opacity:1}
+  .pill{
+    border-radius:999px;background:#eaf6ee;color:var(--success);
+    border:1px solid #c9ecd3;font-size:12px;padding:2px 8px
+  }
+  .pill.checkin{background:#e6f7ea;border-color:#bdecc7;color:var(--success)}
+  .empty{color:#9aa0a6;font-size:12px;margin-top:auto}
+
+  /* modal */
+  .mask{
+    position:fixed;inset:0;background:rgba(0,0,0,.25);
+    display:none;align-items:center;justify-content:center;padding:16px;z-index:20
+  }
+  .mask.show{display:flex}
+  .sheet{
+    width:min(600px,96vw);background:#fff;border-radius:16px;padding:18px;
+    box-shadow:0 24px 60px rgba(0,0,0,.25);border:1px solid var(--border);
+    max-height:90vh;overflow:auto
+  }
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .sheet-title{display:flex;align-items:baseline;gap:8px}
+  .sheet-title h3{margin:0;font-size:18px}
+  .date-sub{color:var(--muted);font-size:13px}
+  .close{border:none;background:#f3f4f6;border:1px solid var(--border);
+    border-radius:10px;padding:6px 10px;cursor:pointer}
+  .row{display:flex;align-items:center;gap:8px;justify-content:space-between;margin:10px 0}
+  .btn.success{background:var(--success);border-color:var(--success);color:#fff}
+  input[type=text]{
+    width:100%;border:1px solid var(--border);padding:10px 12px;border-radius:10px;outline:none
+  }
+  input[type=text]:focus{box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+  ul.tasks{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .task{
+    display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);
+    padding:10px;border-radius:12px
+  }
+  .task.done{opacity:.6}
+  .task .remove{
+    margin-left:auto;border:1px solid var(--border);border-radius:10px;padding:4px 8px;background:#f8fafc;cursor:pointer
+  }
+  .hint{color:var(--muted);font-size:12px;margin-top:6px}
+  .footnote{color:var(--muted);font-size:12px;margin-top:14px}
+  @media (max-width:640px){
+    .day{min-height:90px;padding:8px}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>学习效率助手 · 日历打卡</h1>
+      <div class="toolbar">
+        <button class="btn" id="btnToday">今天</button>
+        <a class="btn" href="#" id="exportJson">导出数据</a>
+      </div>
+    </header>
+
+    <div class="monthbar">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn" id="prevMonth">上月</button>
+        <button class="btn" id="nextMonth">下月</button>
+      </div>
+      <h2 id="ym"></h2>
+      <div class="btn primary" id="goToday">回到今天</div>
+    </div>
+
+    <div class="grid" id="weekHead"></div>
+    <div class="grid" id="calGrid"></div>
+    <p class="footnote">提示：数据仅保存在本地（localStorage），可在右上角导出备份。</p>
   </div>
 
-  <div class="cal-summary" id="cal-summary"></div>
+  <!-- 弹窗 -->
+  <div class="mask" id="mask">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title">
+          <h3 id="sheetDate">8月8日（周四）</h3>
+          <span class="date-sub" id="sheetISO">2025-08-08</span>
+        </div>
+        <button class="close" id="closeSheet">关闭</button>
+      </div>
 
-  <!-- 快速月份选择器（点击标题出现） -->
-  <div class="month-picker" id="month-picker" hidden>
-    <input type="month" id="month-input" />
-    <button class="btn" id="month-apply">跳转</button>
-  </div>
+      <div class="row">
+        <div>
+          <div style="font-weight:600">打卡</div>
+          <div class="hint">勾选后该日期在日历上显示“绿点”</div>
+        </div>
+        <button class="btn success" id="toggleCheck">已打卡</button>
+      </div>
 
-  <div class="cal-week">
-    <div class="sun">日</div><div>一</div><div>二</div><div>三</div>
-    <div>四</div><div>五</div><div class="sat">六</div>
-  </div>
-  <div class="cal-grid pretty" id="cal-grid" aria-live="polite"></div>
-
-  <!-- 底部编辑面板（备注） -->
-  <div class="day-panel" id="day-panel" hidden>
-    <div class="row" style="justify-content:space-between">
-      <div class="muted" id="panel-date"></div>
-      <div>
-        <button class="btn" id="panel-check">切换打卡</button>
-        <button class="btn" id="panel-close">关闭</button>
+      <div style="margin-top:10px">
+        <div style="font-weight:600;margin-bottom:6px">当日任务</div>
+        <div class="row">
+          <input type="text" id="newTask" placeholder="输入任务内容，回车添加…" />
+          <button class="btn primary" id="addTask">添加</button>
+        </div>
+        <ul class="tasks" id="taskList"></ul>
+        <div class="hint" id="progressText">完成度 0/0</div>
       </div>
     </div>
-    <textarea id="panel-note" rows="4" placeholder="给这一天写点备注…"></textarea>
-    <div class="muted" style="text-align:right">自动保存</div>
   </div>
+
+<script>
+(() => {
+  /** ========= 工具 & 数据 ========= **/
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  const storeKey = 'calendarData.v1';
+
+  const fmtISO = (d) => d.toISOString().slice(0,10);
+  const ymd = (y,m) => `${y} 年 ${m+1} 月`;
+  const WEEK = ['日','一','二','三','四','五','六'];
+  const state = {
+    view: new Date(),     // 当前视图月份
+    selected: null,       // 当前弹窗日期（Date）
+    data: load()
+  };
+
+  function load(){
+    try{ return JSON.parse(localStorage.getItem(storeKey)) || {} }catch{ return {} }
+  }
+  function save(){ localStorage.setItem(storeKey, JSON.stringify(state.data)) }
+
+  /** ========= 日历渲染 ========= **/
+  const weekHead = $('#weekHead');
+  const calGrid = $('#calGrid');
+  WEEK.forEach(w => {
+    const el = document.createElement('div');
+    el.className = 'weekday';
+    el.textContent = w;
+    weekHead.appendChild(el);
+  });
+
+  function render(){
+    const base = new Date(state.view.getFullYear(), state.view.getMonth(), 1);
+    const ymText = ymd(base.getFullYear(), base.getMonth());
+    $('#ym').textContent = ymText;
+
+    // 生成显示范围（从周一/周日开头到 6 行补齐）
+    const start = new Date(base);
+    start.setDate(1 - ((start.getDay()+6)%7)); // 以周一为首，可改为日：start.getDay()
+    const cells = [];
+    for(let i=0;i<42;i++){
+      const d = new Date(start); d.setDate(start.getDate()+i); cells.push(d);
+    }
+
+    calGrid.innerHTML='';
+    calGrid.style.gridTemplateColumns = 'repeat(7,1fr)';
+    cells.forEach(d=>{
+      const iso = fmtISO(d);
+      const isOut = d.getMonth() !== base.getMonth();
+      const isToday = fmtISO(new Date()) === iso;
+      const info = state.data[iso] || { checked:false, tasks:[] };
+
+      const el = document.createElement('div');
+      el.className = 'day' + (isOut?' out':'') + (isToday?' today':'');
+      el.innerHTML = `
+        <div class="day-head">
+          <div class="date-num">${d.getDate()}</div>
+          <div class="badges">
+            ${info.checked ? '<span class="pill checkin">已打卡</span>' : ''}
+          </div>
+        </div>
+        <div style="margin-top:auto;display:flex;gap:4px;align-items:center">
+          ${Array.from({length: Math.max(3,info.tasks.length || 0)}).map((_,i)=>{
+            const done = info.tasks[i]?.done;
+            return `<span class="dot ${done?'done':''}"></span>`;
+          }).join('')}
+        </div>
+      `;
+      el.addEventListener('click', ()=>openDay(d));
+      calGrid.appendChild(el);
+    });
+  }
+
+  /** ========= 弹窗 & 当日操作 ========= **/
+  const mask = $('#mask');
+  const sheetDate = $('#sheetDate');
+  const sheetISO  = $('#sheetISO');
+  const toggleBtn = $('#toggleCheck');
+  const taskList  = $('#taskList');
+  const newTask   = $('#newTask');
+  const progress  = $('#progressText');
+
+  function openDay(date){
+    state.selected = new Date(date);
+    const iso = fmtISO(state.selected);
+    const d = state.selected;
+    sheetDate.textContent = `${d.getMonth()+1} 月 ${d.getDate()} 日（周${WEEK[d.getDay()]}）`;
+    sheetISO.textContent  = iso;
+
+    fillDay();
+    mask.classList.add('show');
+    newTask.focus();
+  }
+
+  function fillDay(){
+    const iso = fmtISO(state.selected);
+    const info = state.data[iso] || (state.data[iso]={checked:false, tasks:[]});
+    toggleBtn.textContent = info.checked ? '取消打卡' : '标记打卡';
+    toggleBtn.className = 'btn ' + (info.checked ? '' : 'success');
+
+    // 任务列表
+    taskList.innerHTML='';
+    info.tasks.forEach((t,idx)=>{
+      const li = document.createElement('li');
+      li.className = 'task'+(t.done?' done':'');
+      li.innerHTML = `
+        <input type="checkbox" ${t.done?'checked':''} />
+        <div>${escapeHTML(t.text)}</div>
+        <button class="remove">删除</button>
+      `;
+      const cb = li.querySelector('input');
+      cb.addEventListener('change', ()=>{
+        t.done = cb.checked; save(); fillDay(); render();
+      });
+      li.querySelector('.remove').addEventListener('click', ()=>{
+        info.tasks.splice(idx,1); save(); fillDay(); render();
+      });
+      taskList.appendChild(li);
+    });
+
+    // 进度
+    const total = info.tasks.length;
+    const done  = info.tasks.filter(t=>t.done).length;
+    progress.textContent = `完成度 ${done}/${total}`;
+  }
+
+  function escapeHTML(s){ return s.replace(/[&<>"]/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])) }
+
+  // 事件
+  $('#closeSheet').onclick = ()=>mask.classList.remove('show');
+  mask.addEventListener('click', e=>{
+    if(e.target===mask) mask.classList.remove('show')
+  });
+
+  toggleBtn.onclick = ()=>{
+    const iso = fmtISO(state.selected);
+    const info = state.data[iso] || (state.data[iso]={checked:false,tasks:[]});
+    info.checked = !info.checked; save(); fillDay(); render();
+  }
+
+  $('#addTask').onclick = addTask;
+  newTask.addEventListener('keydown', e=>{
+    if(e.key==='Enter') addTask();
+  });
+  function addTask(){
+    const txt = newTask.value.trim();
+    if(!txt) return;
+    const iso = fmtISO(state.selected);
+    const info = state.data[iso] || (state.data[iso]={checked:false, tasks:[]});
+    info.tasks.push({text:txt, done:false});
+    newTask.value=''; save(); fillDay(); render();
+  }
+
+  // 导航
+  $('#prevMonth').onclick = ()=>{ state.view.setMonth(state.view.getMonth()-1); render() }
+  $('#nextMonth').onclick = ()=>{ state.view.setMonth(state.view.getMonth()+1); render() }
+  $('#btnToday').onclick = $('#goToday').onclick = ()=>{
+    state.view = new Date(); render();
+    // 打开今天
+    openDay(new Date());
+  }
+
+  // 导出
+  $('#exportJson').onclick = (e)=>{
+    e.preventDefault();
+    const blob = new Blob([JSON.stringify(state.data,null,2)],{type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download='calendar-backup.json';
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  // 初始化
+  render();
+})();
+</script>
+</body>
+</html>
 </section>
 
 </main>
