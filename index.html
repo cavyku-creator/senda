@@ -1,240 +1,281 @@
-<!DOCTYPE html>
-<html lang="zh">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>考研倒计时学习助手</title>
-  <style>
-    body {
-      font-family: "Helvetica Neue", sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 2em;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-    }
-    #countdown {
-      font-size: 2em;
-      text-align: center;
-      margin-bottom: 1.5em;
-    }
-    .task-container, .schedule-container, .pomodoro-container {
-      max-width: 700px;
-      margin: 2em auto;
-      background-color: #fff;
-      border-radius: 12px;
-      padding: 2em;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    .task, .time-block {
-      display: flex;
-      align-items: center;
-      margin-bottom: 1em;
-      font-size: 1.1em;
-    }
-    .task input[type="checkbox"] {
-      margin-right: 0.75em;
-      transform: scale(1.3);
-    }
-    .footer {
-      text-align: center;
-      margin-top: 2em;
-      color: #888;
-      font-size: 0.9em;
-    }
-    .reset-button, .pomodoro-button, .add-task-button, .edit-schedule-button {
-      display: block;
-      margin: 1em auto;
-      padding: 0.5em 1.5em;
-      font-size: 1em;
-      background-color: #3498db;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .reset-button:hover, .pomodoro-button:hover, .add-task-button:hover, .edit-schedule-button:hover {
-      background-color: #2980b9;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 0.75em;
-      text-align: center;
-    }
-    th {
-      background-color: #f0f0f0;
-    }
-    #pomodoro-timer {
-      text-align: center;
-      font-size: 2em;
-      margin-top: 1em;
-    }
-    .task input[type="text"] {
-      flex: 1;
-      font-size: 1em;
-      padding: 0.4em;
-    }
-    .task .remove-task {
-      margin-left: 1em;
-      color: red;
-      cursor: pointer;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>学习效率助手（简洁版）</title>
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#fff; --text:#222; --muted:#6b7280;
+    --primary:#635bff; --primary-2:#5148ff; --ok:#10b981; --warn:#f59e0b; --danger:#ef4444;
+    --border:#e5e7eb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; color:var(--text); background:var(--bg)}
+  .container{max-width:980px;margin:auto;padding:16px}
+  header{position:sticky;top:0;z-index:10;background:rgba(246,247,251,.8);backdrop-filter:saturate(180%) blur(10px); border-bottom:1px solid var(--border)}
+  h1{margin:0;font-size:18px}
+  .nav{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+  .btn:hover{background:#fafafa}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn.primary:hover{background:var(--primary-2)}
+  .btn.ghost{background:#fff}
+  .btn.danger{border-color:#fecaca;color:#b91c1c}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
+  .muted{color:var(--muted)}
+  .grid{display:grid;gap:16px}
+  @media(min-width:900px){.grid-2{grid-template-columns:1fr 1fr}}
+  input[type="text"], input[type="number"], textarea, select{
+    width:100%;border:1px solid var(--border);border-radius:10px;padding:10px;outline:none;background:#fff
+  }
+  input:focus, textarea:focus, select:focus{border-color:#c7c9d1; box-shadow:0 0 0 3px rgba(99,91,255,.12)}
+  .progress{height:8px;background:#eef0f5;border-radius:999px;overflow:hidden}
+  .bar{height:100%;background:var(--primary);width:0}
+  ul.tasks{list-style:none;margin:0;padding:0}
+  ul.tasks li{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px dashed var(--border)}
+  ul.tasks li:first-child{border-top:0}
+  .pill{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+  .pill.ok{border-color:#a7f3d0;color:#065f46}
+  .pill.warn{border-color:#fde68a;color:#92400e}
+  .pill.danger{border-color:#fecaca;color:#991b1b}
+  .time{font:700 42px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing:.04em}
+  /* calendar */
+  .cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .cal-week{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;color:var(--muted);margin-top:8px}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px}
+  .day{aspect-ratio:1;border:1px solid var(--border);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .day:hover{background:#fafafa}
+  .day.today{outline:3px solid rgba(99,91,255,.25)}
+  .day.checked{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
+</style>
 </head>
 <body>
-  <h1>📚 考研倒计时学习助手</h1>
-  <div id="countdown"></div>
-
-  <div class="task-container">
-    <div id="task-list"></div>
-    <input type="text" id="new-task-text" placeholder="添加新任务...">
-    <button class="add-task-button" onclick="addTask()">➕ 添加任务</button>
-    <button class="reset-button" onclick="resetTasks()">🔄 重置今日任务</button>
+<header>
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px">
+    <h1>学习效率助手（简洁版）</h1>
+    <div class="nav">
+      <button class="btn" data-tab="tasks">任务</button>
+      <button class="btn" data-tab="focus">专注</button>
+      <button class="btn" data-tab="notes">便签</button>
+      <button class="btn" data-tab="calendar">打卡日历</button>
+    </div>
   </div>
+</header>
 
-  <div class="schedule-container">
-    <h2>📅 每日时间规划表</h2>
-    <button class="edit-schedule-button" onclick="toggleEditSchedule()">🖋️ 编辑时间表</button>
-    <table id="schedule-table">
-      <tr><th>时间段</th><th>任务安排</th><th>操作</th></tr>
-      <tr><td contenteditable="true">7:30 - 8:30</td><td contenteditable="true">洗漱早餐 + 英语单词</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td contenteditable="true">8:30 - 11:30</td><td contenteditable="true">数学一主攻</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td contenteditable="true">11:30 - 12:30</td><td contenteditable="true">午餐 + 休息</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td contenteditable="true">12:30 - 14:00</td><td contenteditable="true">英语阅读/翻译/语法</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td contenteditable="true">14:00 - 16:30</td><td contenteditable="true">专业课刷题 + 总结</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td contenteditable="true">16:30 - 17:30</td><td contenteditable="true">锻炼 + 放松</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td contenteditable="true">17:30 - 19:00</td><td contenteditable="true">晚餐 + 自由时间</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td contenteditable="true">19:00 - 21:00</td><td contenteditable="true">政治背诵 or 真题选择</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-      <tr><td contenteditable="true">21:00 - 22:00</td><td contenteditable="true">错题整理 + 明日规划</td><td><button onclick="deleteRow(this)">删除</button></td></tr>
-    </table>
-    <button onclick="addScheduleRow()">➕ 添加时间段</button>
-  </div>
+<main class="container grid" id="views">
 
-  <div class="pomodoro-container">
-    <h2>⏱ ADHD友好番茄钟</h2>
-    <div id="pomodoro-timer">25:00</div>
-    <button class="pomodoro-button" onclick="startPomodoro()">▶️ 开始专注 25 分钟</button>
-    <button class="pomodoro-button" onclick="resetPomodoro()">🔁 重置</button>
-  </div>
+  <!-- 任务 -->
+  <section id="view-tasks" class="card">
+    <h2 style="margin:0 0 8px">任务清单</h2>
+    <div class="row">
+      <input id="task-input" type="text" placeholder="例如：复习电路第3章 / 题目1-10" />
+      <select id="task-pri" style="max-width:120px">
+        <option value="normal">普通</option>
+        <option value="important">重要</option>
+        <option value="urgent">紧急</option>
+      </select>
+      <button class="btn primary" id="task-add">添加</button>
+    </div>
 
-  <div class="footer">当前任务状态将自动保存（本地存储）。刷新页面也不会丢失。</div>
+    <div style="margin:12px 0 6px" class="row">
+      <span class="muted">完成进度</span>
+      <span class="muted" id="task-progress-text">0%</span>
+    </div>
+    <div class="progress"><div class="bar" id="task-progress"></div></div>
 
-  <audio id="beep-sound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+    <ul class="tasks" id="task-list" style="margin-top:10px"></ul>
 
-  <script>
-    const endDate = new Date("2025-12-15T00:00:00").getTime();
-    function updateCountdown() {
-      const now = new Date().getTime();
-      const distance = endDate - now;
-      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-      document.getElementById("countdown").innerHTML = `距离考研还有 <strong>${days}</strong> 天`;
-    }
+    <div style="text-align:right;margin-top:8px">
+      <button class="btn danger" id="task-clear" title="删除已完成">清除已完成</button>
+    </div>
+  </section>
 
-    function saveTasks() {
-      const tasks = [];
-      document.querySelectorAll(".task-item").forEach((el, idx) => {
-        const checkbox = el.querySelector("input[type='checkbox']");
-        const text = el.querySelector("label").textContent;
-        tasks.push({ text, checked: checkbox.checked });
-      });
-      localStorage.setItem("tasks", JSON.stringify(tasks));
-    }
+  <!-- 专注 -->
+  <section id="view-focus" class="card">
+    <h2 style="margin:0 0 8px">番茄钟</h2>
+    <div class="row">
+      <span class="muted">设定</span>
+      <input id="focus-min" type="number" min="1" max="180" value="25" style="max-width:90px">
+      <span class="muted">分钟/番茄</span>
+      <button class="btn" id="focus-reset">重置</button>
+    </div>
+    <div class="time" id="focus-time" style="margin:12px 0">25:00</div>
+    <div class="row">
+      <button class="btn primary" id="focus-start">开始</button>
+      <button class="btn" id="focus-pause">暂停</button>
+    </div>
+    <p class="muted" style="margin-top:8px">提示：页面刷新会自动续上；时间到会弹窗提醒。</p>
+  </section>
 
-    function loadTasks() {
-      const list = document.getElementById("task-list");
-      list.innerHTML = "";
-      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-      tasks.forEach((task, idx) => {
-        const div = document.createElement("div");
-        div.className = "task task-item";
-        div.innerHTML = `<input type="checkbox" ${task.checked ? 'checked' : ''}> <label>${task.text}</label><span class="remove-task" onclick="removeTask(this)">🗑️</span>`;
-        div.querySelector("input").addEventListener("change", saveTasks);
-        list.appendChild(div);
-      });
-    }
+  <!-- 便签 -->
+  <section id="view-notes" class="card">
+    <h2 style="margin:0 0 8px">便签</h2>
+    <textarea id="note" rows="10" placeholder="随手记：错题编号、要点、明天要做什么……"></textarea>
+    <div class="muted" style="text-align:right;margin-top:6px" id="note-count">0 字</div>
+  </section>
 
-    function addTask() {
-      const text = document.getElementById("new-task-text").value.trim();
-      if (!text) return;
-      const div = document.createElement("div");
-      div.className = "task task-item";
-      div.innerHTML = `<input type="checkbox"> <label>${text}</label><span class="remove-task" onclick="removeTask(this)">🗑️</span>`;
-      div.querySelector("input").addEventListener("change", saveTasks);
-      document.getElementById("task-list").appendChild(div);
-      document.getElementById("new-task-text").value = "";
-      saveTasks();
-    }
+  <!-- 日历 -->
+  <section id="view-calendar" class="card">
+    <div class="cal-head">
+      <h2 style="margin:0">打卡日历</h2>
+      <div class="row">
+        <button class="btn" id="cal-prev">上一月</button>
+        <button class="btn" id="cal-today">今月</button>
+        <button class="btn" id="cal-next">下一月</button>
+      </div>
+    </div>
+    <div class="muted" id="cal-summary" style="margin-top:6px"></div>
+    <div class="cal-week">
+      <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </section>
 
-    function removeTask(el) {
-      el.parentElement.remove();
-      saveTasks();
-    }
+</main>
 
-    function resetTasks() {
-      document.querySelectorAll(".task-item input[type='checkbox']").forEach(cb => cb.checked = false);
-      saveTasks();
-    }
+<footer class="container muted" style="text-align:center;padding:20px 0">
+  仅保存在本地（localStorage）。换浏览器或清缓存会丢失。
+</footer>
 
-    updateCountdown();
-    loadTasks();
+<script>
+/* ============= 小工具 ============= */
+const $ = (s, p=document)=>p.querySelector(s);
+const $$ = (s, p=document)=>Array.from(p.querySelectorAll(s));
+const store = {
+  get(k, v){ try{ const t = localStorage.getItem(k); return t? JSON.parse(t): v } catch{ return v }},
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} }
+};
+const pad = n => String(n).padStart(2,'0');
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
-    // Schedule edit functions
-    function toggleEditSchedule() {
-      const table = document.getElementById("schedule-table");
-      const rows = table.querySelectorAll("tr");
-      rows.forEach((row, idx) => {
-        if (idx === 0) return;
-        const cells = row.children;
-        cells[1].setAttribute("contenteditable", "true");
-        cells[0].setAttribute("contenteditable", "true");
-      });
-    }
+/* ============= 视图切换 ============= */
+const tabs = ["tasks","focus","notes","calendar"];
+let currentTab = store.get("ui.tab","tasks");
+function switchTo(id){
+  tabs.forEach(t=> $(`#view-${t}`).style.display = (t===id?'block':'none'));
+  currentTab=id; store.set("ui.tab", id);
+}
+$$('.nav .btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> switchTo(btn.dataset.tab));
+});
+switchTo(currentTab);
 
-    function saveSchedule() {
-      const schedule = [];
-      document.querySelectorAll("#schedule-table tr").forEach((row, idx) => {
-        if (idx === 0) return;
-        const cells = row.children;
-        schedule.push({ time: cells[0].textContent, task: cells[1].textContent });
-      });
-      localStorage.setItem("schedule", JSON.stringify(schedule));
-    }
+/* ============= 任务清单 ============= */
+let tasks = store.get("tasks.items", []);
+const listEl = $("#task-list"), barEl=$("#task-progress"), barTxt=$("#task-progress-text");
 
-    function loadSchedule() {
-      const schedule = JSON.parse(localStorage.getItem("schedule")) || [];
-      const table = document.getElementById("schedule-table");
-      schedule.forEach(item => {
-        const row = table.insertRow();
-        row.insertCell(0).textContent = item.time;
-        row.insertCell(1).textContent = item.task;
-        const deleteCell = row.insertCell(2);
-        deleteCell.innerHTML = `<button onclick="deleteRow(this)">删除</button>`;
-        row.querySelectorAll("td").forEach(td => td.setAttribute("contenteditable", "true"));
-      });
-    }
+function renderTasks(){
+  listEl.innerHTML = "";
+  if(tasks.length===0){
+    listEl.innerHTML = `<li class="muted" style="justify-content:center;padding:24px 0">暂无任务，先添加一个吧。</li>`;
+  }else{
+    tasks.forEach(t=>{
+      const li=document.createElement('li');
+      li.innerHTML = `
+        <input type="checkbox" ${t.done?'checked':''} style="margin-top:3px">
+        <div style="flex:1">
+          <div style="${t.done?'text-decoration:line-through;color:#9ca3af':''}">${t.text}</div>
+          <div class="muted" style="font-size:12px;margin-top:2px">
+            优先级：
+            <span class="pill ${t.priority==='urgent'?'danger':(t.priority==='important'?'warn':'ok')}">
+              ${t.priority==='urgent'?'紧急':(t.priority==='important'?'重要':'普通')}
+            </span>
+          </div>
+        </div>
+        <button class="btn ghost" data-del>删除</button>
+      `;
+      const ck = li.querySelector('input'); ck.onchange=()=>{t.done=ck.checked; saveTasks();};
+      li.querySelector('[data-del]').onclick=()=>{tasks=tasks.filter(x=>x!==t); saveTasks();};
+      listEl.appendChild(li);
+    });
+  }
+  const done = tasks.filter(t=>t.done).length;
+  const prog = tasks.length? Math.round(done/tasks.length*100):0;
+  barEl.style.width = prog+'%'; barTxt.textContent = prog+'%';
+}
+function saveTasks(){ store.set("tasks.items", tasks); renderTasks(); }
+$("#task-add").onclick=()=>{
+  const txt=$("#task-input").value.trim(); if(!txt) return;
+  const p=$("#task-pri").value;
+  tasks=[{id:crypto.randomUUID(), text:txt, priority:p, done:false, createdAt:Date.now()}, ...tasks];
+  $("#task-input").value=""; saveTasks();
+};
+$("#task-clear").onclick=()=>{ tasks=tasks.filter(t=>!t.done); saveTasks(); };
+renderTasks();
 
-    function deleteRow(button) {
-      button.closest("tr").remove();
-      saveSchedule();
-    }
+/* ============= 番茄钟 ============= */
+let minutes = store.get("focus.minutes", 25);
+let remain = store.get("focus.remain", minutes*60);
+let running = store.get("focus.running", false);
+const minInput = $("#focus-min"), timeEl=$("#focus-time");
 
-    function addScheduleRow() {
-      const table = document.getElementById("schedule-table");
-      const row = table.insertRow();
-      row.insertCell(0).textContent = "新的时间段";
-      row.insertCell(1).textContent = "新的任务";
-      const deleteCell = row.insertCell(2);
-      deleteCell.innerHTML = `<button onclick="deleteRow(this)">删除</button>`;
-      row.querySelectorAll("td").forEach(td => td.setAttribute("contenteditable", "true"));
-    }
+function fmt(sec){ return `${pad(Math.floor(sec/60))}:${pad(sec%60)}` }
+function syncFocusUI(){
+  minInput.value=minutes; timeEl.textContent=fmt(remain);
+  $("#focus-start").disabled = running;
+  $("#focus-pause").disabled = !running;
+}
+let timer=null;
+function tick(){
+  if(!running) return;
+  remain--; if(remain<=0){ remain=0; running=false; alert("时间到，休息一下！"); }
+  store.set("focus.remain", remain); store.set("focus.running", running);
+  syncFocusUI();
+}
+$("#focus-start").onclick=()=>{ if(remain===0) remain=minutes*60; running=true; store.set("focus.running",true); syncFocusUI(); if(!timer) timer=setInterval(tick,1000) };
+$("#focus-pause").onclick=()=>{ running=false; store.set("focus.running",false); syncFocusUI(); };
+$("#focus-reset").onclick=()=>{ running=false; remain=minutes*60; store.set("focus.running",false); store.set("focus.remain",remain); syncFocusUI(); };
+minInput.onchange=()=>{ minutes=Math.max(1,Math.min(180,Number(minInput.value||1))); store.set("focus.minutes",minutes); if(!running){ remain=minutes*60; store.set("focus.remain",remain); } syncFocusUI(); };
+if(running && !timer) timer=setInterval(tick,1000);
+syncFocusUI();
 
-    loadSchedule();
-  </script>
+/* ============= 便签 ============= */
+const noteEl=$("#note"), noteCount=$("#note-count");
+noteEl.value = store.get("notes.text","")
+noteCount.textContent = (noteEl.value.length||0) + " 字";
+noteEl.addEventListener('input', ()=>{
+  store.set("notes.text", noteEl.value);
+  noteCount.textContent = noteEl.value.length + " 字";
+});
+
+/* ============= 打卡日历 ============= */
+let calData = store.get("calendar.checkin", {}); // {'YYYY-MM-DD': true}
+let ym = store.get("calendar.ym", {y:new Date().getFullYear(), m:new Date().getMonth()}); // m:0-11
+const grid=$("#cal-grid"), summary=$("#cal-summary");
+function renderCal(){
+  store.set("calendar.ym", ym);
+  grid.innerHTML="";
+  const today = new Date();
+  const first = new Date(ym.y, ym.m, 1);
+  const start = first.getDay();
+  const days = new Date(ym.y, ym.m+1, 0).getDate();
+
+  // 统计
+  let monthly=0, streak=0;
+  for(let d=1; d<=days; d++){ if(calData[iso(new Date(ym.y, ym.m, d))]) monthly++; }
+  let ptr = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  while(calData[iso(ptr)]){ streak++; ptr.setDate(ptr.getDate()-1); }
+  summary.textContent = `${ym.y}年${ym.m+1}月 · 本月${monthly}天 · 连续${streak}天 · 今天${calData[iso(today)]?'已打卡':'未打卡'}`;
+
+  // 前导空
+  for(let i=0;i<start;i++) grid.appendChild(document.createElement('div'));
+  // 日期
+  for(let d=1; d<=days; d++){
+    const dt=new Date(ym.y, ym.m, d), key=iso(dt);
+    const btn=document.createElement('button');
+    btn.className='day' + (calData[key]?' checked':'') + (iso(dt)===iso(today)?' today':'');
+    btn.textContent=d;
+    btn.title = key + (calData[key]?' · 已打卡':' · 未打卡');
+    btn.onclick = ()=>{ calData[key]=!calData[key]; store.set("calendar.checkin", calData); renderCal(); };
+    grid.appendChild(btn);
+  }
+}
+$("#cal-prev").onclick=()=>{ const d=new Date(ym.y, ym.m-1, 1); ym={y:d.getFullYear(), m:d.getMonth()}; renderCal(); };
+$("#cal-next").onclick=()=>{ const d=new Date(ym.y, ym.m+1, 1); ym={y:d.getFullYear(), m:d.getMonth()}; renderCal(); };
+$("#cal-today").onclick=()=>{ const t=new Date(); ym={y:t.getFullYear(), m:t.getMonth()}; renderCal(); };
+renderCal();
+</script>
 </body>
 </html>
