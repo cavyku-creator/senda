@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>考研学习工作台 · 单文件（增强版）</title>
+  <title>考研学习工作台 · 单文件（增强修复版）</title>
   <meta name="description" content="单文件考研学习工作台：待办、番茄钟、倒计时、打卡日历、词汇卡片、笔记、统计、阶段周计划、时间规划表、备份/还原。全部数据保存在浏览器本地。" />
   <style>
     :root{
@@ -37,13 +37,13 @@
     body{
       margin:0; background: radial-gradient(1200px 800px at 10% 0%, rgba(80,167,255,.10), transparent 60%),
       radial-gradient(1000px 600px at 100% 20%, rgba(52,211,153,.10), transparent 60%), var(--bg);
-      color:var(--text); font-family:var(--font); line-height:1.5; overflow-y:overlay;
+      color:var(--text); font-family:var(--font); line-height:1.5; overflow-y:auto;
     }
     header{
       position:sticky; top:0; z-index:5; backdrop-filter:saturate(130%) blur(8px);
-      background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0))
-                 ,color-mix(in oklab, var(--panel) 90%, transparent);
-      border-bottom:1px solid color-mix(in oklab, var(--text) 10%, transparent);
+      /* 增加一个安全的回退背景，避免部分浏览器不支持 color-mix 导致透明 */
+      background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0)), var(--panel);
+      border-bottom:1px solid rgba(255,255,255,.08);
     }
     .topbar{max-width:1200px; margin:0 auto; padding:10px 16px; display:flex; gap:10px; align-items:center}
     .title{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.3px}
@@ -55,14 +55,14 @@
     .btn:active{transform:translateY(0)}
     .btn.icon{padding:8px; display:inline-grid; place-items:center}
     .btn.primary{background:linear-gradient(135deg, var(--brand), #7cc2ff)}
-    .btn.ghost{background:transparent; border:1px solid color-mix(in oklab, var(--text) 12%, transparent)}
+    .btn.ghost{background:transparent; border:1px solid rgba(255,255,255,.12)}
     .btn.danger{background:linear-gradient(135deg, var(--danger), #ff8a8a)}
     .badge{display:inline-block; padding:2px 8px; border-radius:999px; background:var(--panel-hi); font-size:12px; color:var(--muted)}
     main{max-width:1200px; margin:18px auto 40px; padding:0 16px;}
     .grid{display:grid; grid-template-columns: 330px 1fr; gap:var(--gap)}
     @media (max-width: 980px){.grid{grid-template-columns:1fr}}
-    .panel{background:var(--panel); border:1px solid color-mix(in oklab, var(--text) 10%, transparent); border-radius:var(--radius-lg); box-shadow:var(--shadow)}
-    .panel .hd{display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid color-mix(in oklab, var(--text) 10%, transparent)}
+    .panel{background:var(--panel); border:1px solid rgba(255,255,255,.10); border-radius:var(--radius-lg); box-shadow:var(--shadow)}
+    .panel .hd{display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.10)}
     .panel .bd{padding:14px}
     .muted{color:var(--muted)}
     .kpi{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
@@ -88,14 +88,14 @@
     .todo-inputs{display:grid; grid-template-columns:1.6fr .9fr .9fr .6fr auto; gap:8px; margin-top:10px}
     @media (max-width:900px){.todo-inputs{grid-template-columns:1.5fr .9fr .9fr .7fr}}
     @media (max-width:640px){.todo-inputs{grid-template-columns:1fr}}
-    input, select, textarea{width:100%; background:var(--panel-hi); color:var(--text); border:1px solid color-mix(in oklab, var(--text) 12%, transparent); border-radius:10px; padding:10px; outline:none}
-    input::placeholder, textarea::placeholder{color:color-mix(in oklab, var(--muted) 80%, transparent)}
+    input, select, textarea{width:100%; background:var(--panel-hi); color:var(--text); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:10px; outline:none}
+    input::placeholder, textarea::placeholder{color:rgba(168,179,193,.7)}
 
-    .task{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; padding:10px; border-radius:12px; border:1px dashed color-mix(in oklab, var(--text) 16%, transparent); margin-bottom:8px; background:linear-gradient(0deg, color-mix(in oklab, var(--panel-hi) 70%, transparent), transparent)}
+    .task{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; padding:10px; border-radius:12px; border:1px dashed rgba(255,255,255,.16); margin-bottom:8px; background:linear-gradient(0deg, rgba(22,32,43,.7), transparent)}
     .task.dragging{opacity:.6}
     .task .title{font-weight:600}
     .task .meta{font-size:12px; color:var(--muted)}
-    .task .tag{font-size:12px; padding:3px 8px; border-radius:999px; background:color-mix(in oklab, var(--brand) 20%, transparent); margin-left:6px}
+    .task .tag{font-size:12px; padding:3px 8px; border-radius:999px; background:rgba(80,167,255,.20); margin-left:6px}
     .task.done{opacity:.6; text-decoration:line-through}
 
     /* Calendar */
@@ -127,7 +127,7 @@
     .wk-list li{margin:6px 0}
     .tt-grid{}
     .tt-row{display:grid; grid-template-columns:120px 1fr; gap:10px; padding:10px; border-radius:12px;
-      background:var(--panel-hi); border:1px dashed color-mix(in oklab, var(--text) 16%, transparent); margin-bottom:8px}
+      background:var(--panel-hi); border:1px dashed rgba(255,255,255,.16); margin-bottom:8px}
     .tt-time{font-weight:700; color:var(--muted)}
 
     /* Footer */
@@ -436,18 +436,34 @@
   </dialog>
 
   <script>
+  // ===== Polyfills & helpers =====
+  // FIX: crypto.randomUUID 在极老环境可能不存在
+  (function(){
+    if(!(window.crypto && window.crypto.randomUUID)){
+      window.crypto = window.crypto || {};
+      window.crypto.randomUUID = function(){
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
+          const r = Math.random()*16|0, v = c==='x'? r : (r&0x3|0x8);
+          return v.toString(16);
+        });
+      };
+    }
+  })();
+
   // ===== 简易持久层封装 =====
   const KEYP = 'ke_v1_';
   const store = {
     get(k, def){ try{ const v = localStorage.getItem(KEYP+k); return v ? JSON.parse(v) : (def ?? null)}catch{ return def ?? null } },
     set(k, v){ localStorage.setItem(KEYP+k, JSON.stringify(v)); },
     del(k){ localStorage.removeItem(KEYP+k); },
-    all(){ const o={}; for(const k in localStorage){ if(k && k.startsWith(KEYP)){ try{o[k]=JSON.parse(localStorage.getItem(k))}catch{}} } return o; }
+    // FIX: 正确遍历 localStorage（for..in 会拿到 0/1/2 等索引，导致导出为空）
+    all(){ const o={}; try{ for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(k && k.startsWith(KEYP)){ try{o[k]=JSON.parse(localStorage.getItem(k))}catch{} } } }catch{} return o; }
   };
   const $ = sel => document.querySelector(sel);
   const $$ = sel => Array.from(document.querySelectorAll(sel));
   const fmt2 = n => String(n).padStart(2,'0');
-  const todayKey = (d=new Date()) => d.toISOString().slice(0,10);
+  // FIX: todayKey 使用本地日期，避免 toISOString() 跨时区导致“今天”错一天
+  const todayKey = (d=new Date()) => `${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())}`;
   const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
   const ymd = d => `${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())}`;
   const monday = d => { const t=new Date(d); const w=(t.getDay()+6)%7; t.setDate(t.getDate()-w); t.setHours(0,0,0,0); return t; };
@@ -456,6 +472,8 @@
   // ===== 主题 & 时钟 =====
   const themeBtn = $('#themeBtn');
   function applyTheme(){ document.documentElement.setAttribute('data-theme', store.get('theme','dark')); }
+  // FIX: 首次写入主题，避免 data-theme 为空
+  if(store.get('theme', null)===null){ store.set('theme','dark'); }
   themeBtn.onclick = () => { const t = store.get('theme','dark')==='dark'?'light':'dark'; store.set('theme', t); applyTheme(); };
   applyTheme();
   function tickNow(){ const d=new Date(); const s=`${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())} ${fmt2(d.getHours())}:${fmt2(d.getMinutes())}:${fmt2(d.getSeconds())}`; $('#now').textContent=s; }
@@ -639,9 +657,10 @@
         <button class="btn icon" data-act="del">🗑</button>
       </div>`;
     // events
-    el.querySelector('input').onchange = (e)=>{ updateTask(t.id,{done:e.target.checked}); if(e.target.checked){ logToday(0,0); 
-        const lg = store.get('log_'+todayKey(),{min:0,pom:0,tasks:0}); lg.tasks=(lg.tasks||0)+1; store.set('log_'+todayKey(),lg); updateTodayProgress(); drawCharts(); }
-    };
+    el.querySelector('input').onchange = (e)=>{ updateTask(t.id,{done:e.target.checked}); if(e.target.checked){
+        // 计入任务完成次数（不叠加分钟）
+        const key='log_'+todayKey(); const lg = store.get(key,{min:0,pom:0,tasks:0}); lg.tasks=(lg.tasks||0)+1; store.set(key,lg); updateTodayProgress(); drawCharts(); updateGoalBadge(); updateKPIs(); buildCalendar();
+    }};
     el.querySelector('[data-act="del"]').onclick=()=> removeTask(t.id);
     el.querySelector('[data-act="inc"]').onclick=()=> { updateTask(t.id,{est:(t.est||25)+5}); };
     el.querySelector('[data-act="edit"]').onclick=()=> editTask(t);
@@ -653,7 +672,7 @@
   }
   function saveOrder(){ const ids=[...$('#taskList').children].map(n=>n.dataset.id); tasks.sort((a,b)=> ids.indexOf(a.id)-ids.indexOf(b.id)); store.set('tasks', tasks); }
   function editTask(t){ const nv = prompt('修改任务内容', t.title); if(nv!==null){ updateTask(t.id,{title:nv}); }}
-  function escapeHtml(s){ return s.replace(/[&<>\"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 
   // 新增任务
   $('#addTask').onclick=()=> doAdd();
@@ -711,7 +730,8 @@
   const editor=$('#editor'); editor.innerHTML = store.get('notes','');
   editor.addEventListener('input',()=> store.set('notes', editor.innerHTML));
   $$('.toolbar [data-cmd]').forEach(b=> b.onclick=()=> document.execCommand(b.dataset.cmd,false,null));
-  $('#h1Btn').onclick=()=> document.execCommand('formatBlock', false, 'h2');
+  // FIX: formatBlock 需要大写标签名
+  $('#h1Btn').onclick=()=> document.execCommand('formatBlock', false, 'H2');
   $('#clearNotes').onclick=()=>{ if(confirm('是否清空笔记？此操作不可撤销。')){ editor.innerHTML=''; store.set('notes',''); }}
 
   // ===== 词汇卡片 =====
@@ -739,7 +759,7 @@
 
   // ===== 统计图（原生 Canvas） =====
   function drawBar(canvasId, data, labelGetter, valueGetter){
-    const cvs=$(canvasId); const ctx=cvs.getContext('2d'); const DPR=window.devicePixelRatio||1; const W=cvs.clientWidth*DPR, H=cvs.clientHeight*DPR; cvs.width=W; cvs.height=H; ctx.clearRect(0,0,W,H);
+    const cvs=$(canvasId); if(!cvs) return; const ctx=cvs.getContext('2d'); if(!ctx) return; const DPR=window.devicePixelRatio||1; const W=cvs.clientWidth*DPR, H=cvs.clientHeight*DPR; cvs.width=W; cvs.height=H; ctx.clearRect(0,0,W,H);
     const pad=20*DPR; const innerW=W-pad*2; const innerH=H-pad*2; ctx.font = 12*DPR+'px '+getComputedStyle(document.body).fontFamily; ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--muted');
     const max = Math.max(1, ...data.map(valueGetter));
     const n=data.length; const barW=innerW/n*0.72; const gap=(innerW/n - barW);
@@ -861,25 +881,32 @@
   $('#resetAll').onclick=()=>{ if(confirm('确认清空本应用的所有数据？此操作不可撤销。')){ Object.keys(localStorage).filter(k=>k.startsWith(KEYP)).forEach(k=>localStorage.removeItem(k)); location.reload(); } };
 
   // ===== 首次使用向导 =====
-  const ob=$('#onboard'); $('#onboardBtn').onclick=()=> ob.showModal();
-  if(!store.get('booted', false)){ setTimeout(()=>ob.showModal(), 400); }
-  ob.addEventListener('close',()=>{ if(ob.returnValue==='ok'){
-    const dt=$('#obDate').value; if(dt){ store.set('examDate', dt); examDateInput.value=dt; updateCountdown(); buildCalendar(); }
-    const gm=+$('#obGoal').value||180; store.set('goalMin', gm); goalMin.value=gm; updateGoalBadge();
-    if($('#obSeed').checked){ ['convolution: 卷积','eigenvalue: 特征值','entropy: 熵','Nyquist: 奈奎斯特','flip-flop: 触发器','Laplace: 拉普拉斯']
-      .forEach(s=>{ const [w,m]=s.split(':').map(x=>x.trim()); addCard(w,m); }); }
+  const ob=$('#onboard'); $('#onboardBtn').onclick=()=> ob.showModal && ob.showModal();
+  if(!store.get('booted', false)){
+    // 非支持 dialog 的环境简单兜底
+    if('HTMLDialogElement' in window && HTMLDialogElement.prototype.showModal){ setTimeout(()=>ob.showModal(), 400); }
+    else { ob.setAttribute('open',''); }
+  }
+  ob.addEventListener('close',()=>{
+    if(ob.returnValue==='ok'){
+      const dt=$('#obDate').value; if(dt){ store.set('examDate', dt); examDateInput.value=dt; updateCountdown(); buildCalendar(); }
+      const gm=+$('#obGoal').value||180; store.set('goalMin', gm); goalMin.value=gm; updateGoalBadge();
+      if($('#obSeed').checked){ ['convolution: 卷积','eigenvalue: 特征值','entropy: 熵','Nyquist: 奈奎斯特','flip-flop: 触发器','Laplace: 拉普拉斯']
+        .forEach(s=>{ const [w,m]=s.split(':').map(x=>x.trim()); addCard(w,m); }); }
+    }
+    // FIX: 无论是否点击“完成”，都记为已启动，避免每次刷新都弹窗
     store.set('booted', true);
-  }});
+  });
 
   // ===== 可访问性：键盘快捷键 =====
   document.addEventListener('keydown', (e)=>{
-    if(e.target.matches('input, textarea, [contenteditable="true"]')) return;
-    if(e.key.toLowerCase()==='n'){ $('#taskTitle').focus(); }
+    if(e.target && (e.target.matches?.('input, textarea, [contenteditable="true"]'))) return;
+    if(e.key && e.key.toLowerCase?.()==='n'){ $('#taskTitle').focus(); }
     if(e.code==='Space'){ e.preventDefault(); $('#startPause').click(); }
   });
 
   // 初始渲染修正
-  setTimeout(()=>{ 
+  setTimeout(()=>{
     drawCharts(); updateKPIs(); updateTodayProgress();
     renderWeekPlan(); renderTimetable();
   }, 200);
