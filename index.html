@@ -1,985 +1,597 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>考研学习工作台 · 生物技术版（单文件 + 云同步）</title>
-  <meta name="description" content="单文件考研学习工作台（生物技术）：待办、番茄钟、倒计时、打卡日历、词汇卡片、笔记、统计、阶段周计划、时间规划表、备份/还原、账号云同步。数据本地保存并可同步到云端。" />
+  <title>北理工（生物）考研复习计划｜8月12日—12月20日</title>
   <style>
     :root{
-      --bg: #0b0f14;
-      --panel: #121821;
-      --panel-hi: #16202b;
-      --text: #eaeef3;
-      --muted: #a8b3c1;
-      --brand: #50a7ff;
-      --ok: #34d399;
-      --warn: #f59e0b;
-      --danger: #ef4444;
+      --bg:#0b0c10;           /* 暗色背景 */
+      --card:#111319;
+      --muted:#838aa3;
+      --text:#e9ecf1;
+      --accent:#66e0a3;       /* 绿松石 */
+      --accent-2:#7cb6ff;     /* 蓝 */
+      --accent-3:#f8ca6e;     /* 金 */
+      --danger:#ff7a7a;
+      --ok:#9ee493;
+      --border:#222634;
+      --chip:#1a1e2b;
       --shadow: 0 10px 30px rgba(0,0,0,.35);
-      --radius-lg: 16px;
-      --radius-md: 12px;
-      --radius-sm: 8px;
-      --gap: 14px;
-      --font: system-ui, -apple-system, Segoe UI, Roboto, PingFang SC, Microsoft YaHei, Helvetica, Arial, sans-serif;
     }
     [data-theme="light"]{
-      --bg: #f6f8fb;
-      --panel: #ffffff;
-      --panel-hi: #f0f3f7;
-      --text: #0f1621;
-      --muted: #66707b;
-      --brand: #2b78ff;
-      --shadow: 0 10px 24px rgba(0,0,0,.08);
+      --bg:#f6f7fb;
+      --card:#ffffff;
+      --muted:#5b6074;
+      --text:#1d2230;
+      --accent:#0aa36e;
+      --accent-2:#1766d1;
+      --accent-3:#b57400;
+      --danger:#d33a3a;
+      --ok:#2f8a4b;
+      --border:#e9ebf2;
+      --chip:#f1f3f9;
+      --shadow: 0 10px 24px rgba(28,59,90,.12);
     }
-    *{box-sizing: border-box}
+
     html,body{height:100%}
     body{
-      margin:0; background: radial-gradient(1200px 800px at 10% 0%, rgba(80,167,255,.10), transparent 60%),
-      radial-gradient(1000px 600px at 100% 20%, rgba(52,211,153,.10), transparent 60%), var(--bg);
-      color:var(--text); font-family:var(--font); line-height:1.5; overflow-y:overlay;
+      margin:0; font: 15px/1.7 system-ui, -apple-system, Segoe UI, Roboto, PingFang SC, Hiragino Sans GB, "Microsoft Yahei", Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background:linear-gradient(180deg, var(--bg), #0c0f16 30%, var(--bg));
+      color:var(--text);
     }
-    header{
-      position:sticky; top:0; z-index:5; backdrop-filter:saturate(130%) blur(8px);
-      background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0)), var(--panel);
-      border-bottom:1px solid rgba(255,255,255,.08);
+    .container{max-width:1100px; margin:0 auto; padding:26px 18px 80px}
+
+    /* 顶部 */
+    header{position:sticky; top:0; z-index:20; backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 88%, transparent); border-bottom:1px solid var(--border)}
+    header .bar{display:flex; gap:14px; align-items:center; justify-content:space-between; max-width:1100px; margin:0 auto; padding:10px 16px}
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{width:28px; height:28px; border-radius:8px; background: conic-gradient(from 180deg at 50% 50%, var(--accent), var(--accent-2), var(--accent-3)); box-shadow: var(--shadow)}
+    h1{font-size:18px; margin:0}
+    nav{display:flex; flex-wrap:wrap; gap:8px}
+    nav a{color:var(--text); text-decoration:none; background:var(--chip); border:1px solid var(--border); padding:8px 10px; border-radius:12px}
+    nav a:hover{outline:2px solid color-mix(in srgb, var(--accent) 35%, transparent)}
+
+    /* 控件按钮 */
+    .btn{appearance:none; border:1px solid var(--border); background:var(--card); color:var(--text); padding:8px 12px; border-radius:12px; cursor:pointer}
+    .btn:hover{outline:2px solid color-mix(in srgb, var(--accent-2) 25%, transparent)}
+
+    /* 卡片与布局 */
+    .grid{display:grid; grid-template-columns: 1fr; gap:18px}
+    @media (min-width: 880px){
+      .grid-2{grid-template-columns: 1.1fr .9fr}
+      .grid-3{grid-template-columns: repeat(3, 1fr)}
     }
-    .topbar{max-width:1200px; margin:0 auto; padding:10px 16px; display:flex; gap:10px; align-items:center}
-    .title{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.3px}
-    .title .logo{width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg, var(--brand), #34d399); box-shadow:var(--shadow)}
-    .grow{flex:1}
-    .btn{appearance:none; border:none; padding:9px 12px; border-radius:10px; background:var(--panel-hi); color:var(--text); cursor:pointer; box-shadow:var(--shadow);
-      transition:transform .05s ease, background .2s ease, opacity .2s ease}
-    .btn:hover{transform:translateY(-1px)}
-    .btn:active{transform:translateY(0)}
-    .btn.icon{padding:8px; display:inline-grid; place-items:center}
-    .btn.primary{background:linear-gradient(135deg, var(--brand), #7cc2ff)}
-    .btn.ghost{background:transparent; border:1px solid rgba(255,255,255,.12)}
-    .btn.danger{background:linear-gradient(135deg, var(--danger), #ff8a8a)}
-    .badge{display:inline-block; padding:2px 8px; border-radius:999px; background:var(--panel-hi); font-size:12px; color:var(--muted)}
-    main{max-width:1200px; margin:18px auto 40px; padding:0 16px;}
-    .grid{display:grid; grid-template-columns: 330px 1fr; gap:var(--gap)}
-    @media (max-width: 980px){.grid{grid-template-columns:1fr}}
-    .panel{background:var(--panel); border:1px solid rgba(255,255,255,.10); border-radius:var(--radius-lg); box-shadow:var(--shadow)}
-    .panel .hd{display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.10)}
-    .panel .bd{padding:14px}
+    .card{background:var(--card); border:1px solid var(--border); border-radius:18px; padding:18px; box-shadow:var(--shadow)}
+    .card h2{margin:0 0 10px; font-size:22px}
     .muted{color:var(--muted)}
-    .kpi{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
-    .kpi .card{padding:12px; background:var(--panel-hi); border-radius:12px; text-align:center}
-    .kpi .num{font-size:22px; font-weight:700}
+    .chips{display:flex; flex-wrap:wrap; gap:8px}
+    .chip{background:var(--chip); border:1px solid var(--border); border-radius:999px; padding:6px 10px; font-size:13px}
 
-    .countdown{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    .countdown .box{padding:10px; background:var(--panel-hi); border-radius:12px}
-    .countdown .big{font-size:28px; font-weight:800}
+    /* 进度条 */
+    .bar{height:10px; background:var(--chip); border-radius:999px; overflow:hidden; border:1px solid var(--border)}
+    .bar > span{display:block; height:100%}
 
-    .pomodoro{display:grid; gap:10px}
-    .pomodoro .screen{display:grid; place-items:center; padding:18px; background:var(--panel-hi); border-radius:12px; font-variant-numeric: tabular-nums;}
-    .pomodoro .time{font-size:42px; font-weight:800}
-    .pomodoro .modes{display:flex; gap:6px; flex-wrap:wrap; justify-content:center}
-    .pomodoro .modes .btn{border-radius:999px; padding:6px 10px}
-    .row{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+    /* 表格（日程） */
+    table{width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:16px; border:1px solid var(--border)}
+    th,td{padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:top}
+    th{background: color-mix(in srgb, var(--chip) 60%, transparent); text-align:left}
+    tr:last-child td{border-bottom:none}
 
-    .todo-header{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-    .pill{border-radius:999px; padding:6px 10px; background:var(--panel-hi); cursor:pointer; user-select:none}
-    .pill.active{outline:2px solid var(--brand)}
-    .todo-inputs{display:grid; grid-template-columns:1.6fr .9fr .9fr .6fr auto; gap:8px; margin-top:10px}
-    @media (max-width:900px){.todo-inputs{grid-template-columns:1.5fr .9fr .9fr .7fr}}
-    @media (max-width:640px){.todo-inputs{grid-template-columns:1fr}}
-    input, select, textarea{width:100%; background:var(--panel-hi); color:var(--text); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:10px; outline:none}
-    input::placeholder, textarea::placeholder{color:rgba(168,179,193,.7)}
+    /* 折叠面板 */
+    details{border:1px solid var(--border); background:var(--card); border-radius:16px; padding:10px 12px}
+    summary{cursor:pointer; list-style:none; display:flex; align-items:center; gap:10px; font-weight:600}
+    summary::-webkit-details-marker{display:none}
+    details[open]{outline:2px solid color-mix(in srgb, var(--accent) 22%, transparent)}
 
-    .task{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; padding:10px; border-radius:12px; border:1px dashed rgba(255,255,255,.16); margin-bottom:8px; background:linear-gradient(0deg, rgba(22,32,43,.7), transparent)}
-    .task.dragging{opacity:.6}
-    .task .title{font-weight:600}
-    .task .meta{font-size:12px; color:var(--muted)}
-    .task .tag{font-size:12px; padding:3px 8px; border-radius:999px; background:rgba(80,167,255,.20); margin-left:6px}
-    .task.done{opacity:.6; text-decoration:line-through}
+    /* 徽章 */
+    .badge{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:var(--chip); font-size:12px}
 
-    .calendar{display:grid; grid-template-columns: repeat(7, 1fr); gap:6px}
-    .day{aspect-ratio:1/1; border-radius:10px; background:var(--panel-hi); display:flex; flex-direction:column; padding:6px; cursor:pointer; position:relative}
-    .day .d{font-size:12px; color:var(--muted)}
-    .day .dot{width:8px; height:8px; border-radius:50%; position:absolute; right:6px; bottom:6px; background:var(--muted)}
-    .day.good .dot{background:var(--ok)}
-    .day.bad .dot{background:var(--danger)}
-    .dow{font-size:12px; color:var(--muted); text-align:center; margin-bottom:6px}
-
-    .toolbar{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
-    .editor{min-height:180px; padding:12px; border-radius:12px; background:var(--panel-hi); outline:none}
-
-    .vocab{display:grid; gap:8px}
-    .card{border-radius:12px; padding:16px; background:var(--panel-hi); text-align:center}
-    .card .word{font-size:26px; font-weight:800}
-    .card .mean{margin-top:6px; color:var(--muted)}
-
-    .stats-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    @media (max-width:900px){.stats-grid{grid-template-columns:1fr}}
-    canvas{width:100%; height:220px}
-
-    .wk-list{margin:0; padding-left:18px}
-    .wk-list li{margin:6px 0}
-    .tt-row{display:grid; grid-template-columns:120px 1fr; gap:10px; padding:10px; border-radius:12px;
-      background:var(--panel-hi); border:1px dashed rgba(255,255,255,.16); margin-bottom:8px}
-    .tt-time{font-weight:700; color:var(--muted)}
-
+    /* 打印优化 */
     @media print{
-      header, .no-print{display:none !important}
+      header, .controls{display:none !important}
       body{background:#fff}
-      .panel{box-shadow:none}
+      .container{padding:0}
+      .card{box-shadow:none}
+      a{color:#000}
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="topbar">
-      <div class="title" aria-label="品牌标识与标题">
+    <div class="bar">
+      <div class="brand">
         <div class="logo" aria-hidden="true"></div>
-        <div>
-          <div>考研学习工作台 · 生物技术</div>
-          <div class="muted" style="font-size:12px">本地运行 · 单文件 · 离线可用 · 支持云同步</div>
-        </div>
+        <h1>北理工（生物）考研复习计划｜2025-08-12 → 2025-12-20</h1>
       </div>
-      <div class="grow"></div>
-      <span id="now" class="badge" aria-live="polite">--:--</span>
-      <span id="authStatus" class="badge">未登录</span>
-      <button id="loginBtn" class="btn" title="登录/注册">登录/注册</button>
-      <button id="logoutBtn" class="btn ghost" title="退出登录" hidden>退出</button>
-      <button id="themeBtn" class="btn icon" title="切换明/暗主题" aria-label="切换明暗主题">🌓</button>
-      <button id="onboardBtn" class="btn" title="首设向导">初始设置</button>
+      <div class="controls">
+        <button class="btn" id="toggleTheme">切换浅/深色</button>
+        <button class="btn" id="expandAll">展开全部周</button>
+        <button class="btn" id="collapseAll">折叠全部周</button>
+        <button class="btn" onclick="window.print()">打印/存为PDF</button>
+      </div>
+    </div>
+    <div class="bar" style="padding-top:0">
+      <nav>
+        <a href="#overview">概览</a>
+        <a href="#daily">每日时间表</a>
+        <a href="#milestones">月度里程碑</a>
+        <a href="#weekly">逐周计划</a>
+        <a href="#methods">方法与资料</a>
+        <a href="#review">打卡与复盘</a>
+      </nav>
     </div>
   </header>
 
-  <main>
-    <div class="grid">
-      <div class="panel" id="leftPanel" aria-label="侧边工作区">
-        <div class="hd"><strong>倒计时与番茄钟</strong>
-          <div class="row">
-            <label class="badge" for="examDate">初试日期</label>
-            <input type="date" id="examDate"/>
-          </div>
+  <main class="container">
+    <!-- 概览 -->
+    <section id="overview" class="grid grid-2">
+      <div class="card">
+        <h2>总体策略</h2>
+        <p class="muted">区间：8月12日（周二）—12月20日（周六），共19周。默认每周学习6天、休息1天（或半天），每日有效学习约8.5–9.5小时。</p>
+        <div class="chips" style="margin:10px 0 14px">
+          <span class="chip">英语二</span>
+          <span class="chip">政治</span>
+          <span class="chip">生物化学</span>
+          <span class="chip">分子生物学</span>
+          <span class="chip">微生物学</span>
+          <span class="chip">真题与套卷</span>
+          <span class="chip">错题本/知识卡片</span>
         </div>
-        <div class="bd">
-          <div class="countdown" aria-label="倒计时区块">
-            <div class="box" title="距离初试"><div class="muted">距离初试</div><div class="big" id="dLeft">--</div><div class="muted">天</div></div>
-            <div class="box" title="今日目标"><div class="muted">今日目标</div>
-              <div class="row" style="align-items:center; margin-top:6px">
-                <input type="number" id="goalMin" min="10" step="5" value="180" aria-label="目标分钟数"/>
-                <span class="muted">分钟</span>
-                <span class="badge" id="goalHit">未达成</span>
-              </div>
-              <div class="muted" id="todayProgress" style="margin-top:6px">今日专注 0 分钟 · 0 个番茄</div>
-            </div>
-          </div>
-
-          <div class="pomodoro" aria-label="番茄钟">
-            <div class="modes">
-              <button class="btn pill" data-mode="work">专注</button>
-              <button class="btn pill" data-mode="short">短休</button>
-              <button class="btn pill" data-mode="long">长休</button>
-              <span class="badge" id="cycleInfo">第 1 轮</span>
-            </div>
-            <div class="screen">
-              <div class="time" id="time">25:00</div>
-              <div class="muted" id="modeLabel">专注模式</div>
-            </div>
-            <div class="row">
-              <button class="btn primary" id="startPause">开始</button>
-              <button class="btn" id="skip">跳过</button>
-              <button class="btn ghost" id="reset">重置</button>
-            </div>
-            <div class="row">
-              <label class="badge">专注/短休/长休(分)</label>
-              <input id="cfgWork" type="number" min="5" step="5" value="25" style="width:90px">
-              <input id="cfgShort" type="number" min="3" step="1" value="5" style="width:90px">
-              <input id="cfgLong" type="number" min="10" step="5" value="15" style="width:90px">
-              <label class="badge">每几轮长休</label>
-              <input id="cfgEvery" type="number" min="2" step="1" value="4" style="width:90px">
-            </div>
-          </div>
-
-          <div style="height:10px"></div>
-          <div class="kpi" aria-label="关键指标">
-            <div class="card"><div class="muted">本周累计(分)</div><div class="num" id="wkMin">0</div></div>
-            <div class="card"><div class="muted">本月累计(分)</div><div class="num" id="moMin">0</div></div>
-            <div class="card"><div class="muted">连续打卡(天)</div><div class="num" id="streak">0</div></div>
-          </div>
+        <ul>
+          <li><b>阶段：</b>8月搭框架→9月一轮收口+二轮起步→10月强化与真题→11月三轮冲刺+套卷→12月冲刺背诵与模拟。</li>
+          <li><b>早上给专业课：</b>生化/分子/微生在上午与下午主时段交替；晚间安排英语与政治。</li>
+          <li><b>限时训练：</b>10月起对英语阅读与专业课综合题执行严格计时。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>时间分配（周均）</h2>
+        <p class="muted">可±10%微调；保证每周至少一次“补缺半天”。</p>
+        <div style="display:grid; grid-template-columns: 120px 1fr; gap:10px; align-items:center; margin:8px 0">
+          <div>专业课（合计）</div>
+          <div class="bar"><span style="width:58%; background:linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--accent-2)))"></span></div>
+          <div class="muted" style="grid-column:1 / -1">22–24h/周（生化、分子、微生轮转；含题目与背诵）</div>
+        </div>
+        <div style="display:grid; grid-template-columns: 120px 1fr; gap:10px; align-items:center; margin:8px 0">
+          <div>英语二</div>
+          <div class="bar"><span style="width:22%; background:var(--accent-2)"></span></div>
+          <div class="muted" style="grid-column:1 / -1">8–10h/周（真题精读、翻译与写作）</div>
+        </div>
+        <div style="display:grid; grid-template-columns: 120px 1fr; gap:10px; align-items:center; margin:8px 0">
+          <div>政治</div>
+          <div class="bar"><span style="width:18%; background:var(--accent-3)"></span></div>
+          <div class="muted" style="grid-column:1 / -1">7–9h/周（1000题→肖八→肖四）</div>
+        </div>
+        <div style="display:grid; grid-template-columns: 120px 1fr; gap:10px; align-items:center; margin:8px 0">
+          <div>机动复盘</div>
+          <div class="bar"><span style="width:6%; background:linear-gradient(90deg, var(--muted), var(--accent-3))"></span></div>
+          <div class="muted" style="grid-column:1 / -1">1–2h/周（错题回炉、补缺）</div>
         </div>
       </div>
+    </section>
 
-      <div class="panel" id="todoPanel">
-        <div class="hd">
-          <strong>今日待办</strong>
-          <div class="row">
-            <span class="badge">按学科筛选</span>
-            <div id="filterBar" class="row"></div>
-          </div>
-        </div>
-        <div class="bd">
-          <div class="todo-header">
-            <div class="muted">建议：为 “英语二 / 政治 / 生化 / 分子生物学 / 微生物” 建立颗粒度适中的任务，估时以 25–50 分为宜。</div>
-            <div class="grow"></div>
-            <button class="btn" id="tplBtn" title="一键生成模板任务">插入模板</button>
-            <button class="btn ghost" id="clearDone">清理已完成</button>
-          </div>
-
-          <div class="todo-inputs" style="margin-top:8px" aria-label="新增任务">
-            <input id="taskTitle" placeholder="任务内容，如：英语二真题阅读 1 篇 + 精读" aria-label="任务内容"/>
-            <select id="taskSubject" aria-label="学科">
-              <option value="英语二">英语二</option>
-              <option value="政治">政治</option>
-              <option value="生化">生化</option>
-              <option value="分子生物学">分子生物学</option>
-              <option value="微生物">微生物</option>
-              <option value="其他">其他</option>
-            </select>
-            <input id="taskDue" type="date" aria-label="截止日期">
-            <select id="taskPri" aria-label="优先级">
-              <option value="P2">常规</option>
-              <option value="P1">紧急</option>
-              <option value="P3">低</option>
-            </select>
-            <button id="addTask" class="btn primary">添加 (Enter)</button>
-          </div>
-
-          <div id="taskList" style="margin-top:10px" aria-live="polite"></div>
-        </div>
+    <!-- 每日时间表 -->
+    <section id="daily" class="card" style="margin-top:18px">
+      <h2>每日时间表（执行模板） <span class="badge" id="today"></span></h2>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:130px">时间</th>
+            <th>任务</th>
+            <th style="width:120px">完成</th>
+          </tr>
+        </thead>
+        <tbody id="dailyBody">
+          <tr>
+            <td>07:00</td>
+            <td>起床 & 清醒：10分钟拉伸 + 20分钟背单词（英语二间隔重复）</td>
+            <td><input type="checkbox" data-task="0700"/></td>
+          </tr>
+          <tr>
+            <td>08:00–10:00</td>
+            <td>专业课A 深度学习（示例：生化代谢模块）→做随堂题→做知识卡片/易混清单</td>
+            <td><input type="checkbox" data-task="0800"/></td>
+          </tr>
+          <tr>
+            <td>10:15–12:00</td>
+            <td>专业课B 巩固（示例：分子复制/转录/翻译子专题）</td>
+            <td><input type="checkbox" data-task="1015"/></td>
+          </tr>
+          <tr>
+            <td>14:00–16:00</td>
+            <td>专业课C 题目训练（示例：微生+综合题/实验设计题），当天订正与归档</td>
+            <td><input type="checkbox" data-task="1400"/></td>
+          </tr>
+          <tr>
+            <td>16:20–17:20</td>
+            <td>英语二：阅读/翻译/完形（三择一，精读+复盘）</td>
+            <td><input type="checkbox" data-task="1620"/></td>
+          </tr>
+          <tr>
+            <td>19:00–20:30</td>
+            <td>政治：1000题逻辑梳理/选择题训练（后期与背诵轮换）</td>
+            <td><input type="checkbox" data-task="1900"/></td>
+          </tr>
+          <tr>
+            <td>20:40–21:40</td>
+            <td>英语二：写作模板/句式 or 真题作文改写（隔日翻译/新题型）</td>
+            <td><input type="checkbox" data-task="2040"/></td>
+          </tr>
+          <tr>
+            <td>21:40–22:10</td>
+            <td>当日复盘：专业课3–5个机制复述；英语错句重翻；政治错题标星</td>
+            <td><input type="checkbox" data-task="2140"/></td>
+          </tr>
+          <tr>
+            <td>备注</td>
+            <td colspan="2"><textarea id="notes" placeholder="记录今天的薄弱点/待补缺知识…" style="width:100%; min-height:80px; resize:vertical; background:var(--chip); border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text)"></textarea></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="display:flex; gap:10px; margin-top:12px">
+        <button class="btn" id="clearToday">清空今日打卡</button>
+        <span class="muted">提示：打卡与备注自动保存在本机（localStorage），按日期分开存储。</span>
       </div>
-    </div>
+    </section>
 
-    <div style="height:14px"></div>
-
-    <div class="grid">
-      <div class="panel" id="planPanel">
-        <div class="hd">
-          <strong>阶段周计划</strong>
-          <div class="row">
-            <span class="badge" id="phaseLabel">阶段</span>
-            <button class="btn icon" id="wkPrev" title="上一周" aria-label="上一周">◀</button>
-            <span class="badge" id="wkLabel">第 1 周 · --/-- – --/--</span>
-            <button class="btn icon" id="wkNext" title="下一周" aria-label="下一周">▶</button>
-            <button class="btn" id="pushWeek" title="把本周计划生成到待办">下发本周到待办</button>
-            <button class="btn ghost" id="pushAll" title="一键生成 19 周">一键生成19周</button>
-          </div>
-        </div>
-        <div class="bd">
-          <ul id="wkGoals" class="wk-list"></ul>
-          <div class="muted" style="margin-top:6px">提示：点击“下发本周到待办”会把本周日常配额生成带截止日期的任务。</div>
-        </div>
+    <!-- 月度里程碑 -->
+    <section id="milestones" class="grid grid-3" style="margin-top:18px">
+      <div class="card">
+        <h2>8月（8/12–8/31）｜基础搭框架</h2>
+        <ul>
+          <li>三科主线通读，建立总图谱（代谢网络/中心法则/微生框架）。</li>
+          <li>生化：酶与能量、糖脂氨代谢概览；分子：复制/修复；微生：结构/生长。</li>
+          <li>英语二：词汇与长难句，旧年阅读 <b>6–8篇精读</b>；政治：1000题 ≥ 300题。</li>
+          <li class="muted">产出：思维导图1.0、错题本与高频概念卡。</li>
+        </ul>
       </div>
-
-      <div class="panel" id="ttPanel">
-        <div class="hd">
-          <strong>时间规划表</strong>
-          <span class="badge">每日节奏：07:30–22:00</span>
-        </div>
-        <div class="bd">
-          <div id="ttBox" class="tt-grid" aria-label="时间规划表"></div>
-          <div class="muted" style="margin-top:6px">说明：此表为默认学习节奏，可在代码里调整。</div>
-        </div>
+      <div class="card">
+        <h2>9月（9/1–9/30）｜一轮收口 + 二轮起步</h2>
+        <ul>
+          <li>补齐未覆盖模块，转入专题精练与小测（每周一次）。</li>
+          <li>英语二：系统做2010–2016真题；政治1000题推进到70–80%。</li>
+          <li class="muted">产出：一轮完成+二轮前半；英语精做2010–2016；各科小测≥2次。</li>
+        </ul>
       </div>
-    </div>
-
-    <div style="height:14px"></div>
-
-    <div class="grid">
-      <div class="panel" id="calendarPanel">
-        <div class="hd">
-          <strong>打卡日历</strong>
-          <div class="row">
-            <button class="btn icon" id="prevMonth" title="上月" aria-label="上个月">◀</button>
-            <span class="badge" id="ymLabel">--</span>
-            <button class="btn icon" id="nextMonth" title="下月" aria-label="下个月">▶</button>
-            <span class="badge">标准：当日专注分钟 ≥ 今日目标，视为达标</span>
-          </div>
-        </div>
-        <div class="bd">
-          <div class="row" style="margin-bottom:6px; justify-content:space-between">
-            <div class="row" style="gap:10px">
-              <span class="dow">一</span><span class="dow">二</span><span class="dow">三</span>
-              <span class="dow">四</span><span class="dow">五</span><span class="dow">六</span><span class="dow">日</span>
-            </div>
-            <div class="row">
-              <button id="markToday" class="btn">手动打卡今天</button>
-            </div>
-          </div>
-          <div id="calendar" class="calendar" aria-label="月历"></div>
-        </div>
+      <div class="card">
+        <h2>10月（10/1–10/31）｜二轮强化 + 真题深入</h2>
+        <ul>
+          <li>机制比较、图表记忆、综合/实验题强化，形成<b>答题模板</b>。</li>
+          <li>英语二：2017–2020滚动；写作模板库（大小作文各10句）。</li>
+          <li>政治：1000题收尾→客观题多轮训练，正确率60–70%为阶段线。</li>
+        </ul>
       </div>
-
-      <div class="panel" id="vocabPanel">
-        <div class="hd"><strong>词汇卡片</strong>
-          <div class="row">
-            <button class="btn" id="startQuiz">开始测验</button>
-            <button class="btn ghost" id="shuffle">打乱</button>
-          </div>
-        </div>
-        <div class="bd vocab">
-          <div class="row">
-            <input id="vWord" placeholder="单词 / 术语 (如: glycolysis)"/>
-            <input id="vMean" placeholder="释义 (如: 糖酵解)"/>
-            <button id="addVocab" class="btn primary">添加</button>
-          </div>
-          <div id="vCards" class="row" style="flex-wrap:wrap"></div>
-          <div id="quizBox" class="card" hidden>
-            <div class="word" id="qFront">—</div>
-            <div class="mean" id="qBack" hidden>—</div>
-            <div class="row" style="justify-content:center; margin-top:8px">
-              <button class="btn" id="reveal">显示释义</button>
-              <button class="btn" id="know" title="认识">认识</button>
-              <button class="btn" id="dont">不认识</button>
-            </div>
-            <div class="muted" id="qMeta" style="margin-top:6px">0 / 0</div>
-          </div>
-        </div>
+      <div class="card">
+        <h2>11月（11/1–11/30）｜三轮冲刺 + 套卷</h2>
+        <ul>
+          <li>专业课每周一套综合卷；背诵“机制链条”。</li>
+          <li>英语二：2021–2024真题+模拟；作文40分钟完稿。</li>
+          <li>政治：<b>肖八</b>两周内做完并复盘；主观题开始滚背。</li>
+        </ul>
       </div>
-    </div>
-
-    <div style="height:14px"></div>
-
-    <div class="grid">
-      <div class="panel" id="notesPanel">
-        <div class="hd"><strong>随手笔记</strong>
-          <div class="toolbar">
-            <button class="btn icon" data-cmd="bold" title="加粗"><b>B</b></button>
-            <button class="btn icon" data-cmd="italic" title="斜体"><i>I</i></button>
-            <button class="btn icon" data-cmd="underline" title="下划线"><u>U</u></button>
-            <button class="btn icon" id="h1Btn" title="一级标题">H1</button>
-            <button class="btn" id="clearNotes" title="清空笔记">清空</button>
-          </div>
-        </div>
-        <div class="bd">
-          <div id="editor" class="editor" contenteditable="true" aria-label="可编辑笔记区域"></div>
-        </div>
+      <div class="card">
+        <h2>12月（12/1–12/20）｜最终冲刺</h2>
+        <ul>
+          <li>专业课：每2–3天一套/半套限时，错题反复清零。</li>
+          <li>英语二：两次全真整套模拟；作文与翻译模板快速过一遍。</li>
+          <li>政治：<b>肖四</b>主攻背诵+选择题回炉，考前7天主背主观题逻辑链。</li>
+        </ul>
       </div>
+    </section>
 
-      <div class="panel" id="statsPanel">
-        <div class="hd"><strong>学习统计</strong>
-          <div class="row">
-            <span class="badge">近 14 天专注分钟</span>
-            <span class="badge">完成任务计数</span>
-          </div>
-        </div>
-        <div class="bd stats-grid">
-          <canvas id="chartMin" aria-label="专注分钟柱状图"></canvas>
-          <canvas id="chartTask" aria-label="完成任务柱状图"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <div style="height:14px"></div>
-
-    <div class="grid">
-      <div class="panel" id="linksPanel">
-        <div class="hd"><strong>资料与链接</strong>
-          <div class="row">
-            <input id="linkTitle" placeholder="名称，如：生化思维导图 PDF" />
-            <input id="linkUrl" placeholder="链接，如：https://..." />
-            <button id="addLink" class="btn primary">添加</button>
-          </div>
-        </div>
-        <div class="bd" id="links"></div>
-      </div>
-
-      <div class="panel no-print" id="toolsPanel">
-        <div class="hd"><strong>工具与数据</strong></div>
-        <div class="bd">
-          <div class="row" style="flex-wrap:wrap">
-            <button class="btn" id="exportBtn">导出数据(JSON)</button>
-            <label class="btn ghost" for="importFile">导入数据</label>
-            <input type="file" id="importFile" accept="application/json" hidden>
-            <button class="btn" id="printBtn">打印学习日报</button>
-            <button class="btn danger" id="resetAll">恢复出厂(危险)</button>
-          </div>
-          <div class="muted" style="margin-top:6px">所有数据保存在浏览器 <code>localStorage</code> 中；如需多设备同步，右上角登录后将自动同步至云端。</div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <dialog id="onboard">
-    <form method="dialog" style="min-width: min(520px, 90vw);">
-      <h3>首次设置</h3>
-      <p class="muted">以下设置可随时在页面中修改。</p>
-      <div class="row" style="gap:10px; align-items:center">
-        <label>初试日期：</label>
-        <input type="date" id="obDate">
-      </div>
-      <div class="row" style="gap:10px; align-items:center; margin-top:8px">
-        <label>每日目标(分钟)：</label>
-        <input type="number" id="obGoal" min="30" step="5" value="180" style="width:120px">
-      </div>
-      <div style="margin-top:12px">
+    <!-- 逐周计划 -->
+    <section id="weekly" class="card" style="margin-top:18px">
+      <h2>逐周计划（19周，带日期）</h2>
+      <div class="muted" style="margin-bottom:10px">说明：每周“专业课A/B/C”为生化/分子/微生三模块的主攻主题；周末安排阶段小测或套卷。可根据掌握度小幅互换顺序。</div>
+      <div class="grid">
+        <!-- W1–W19 as details blocks -->
         <details>
-          <summary>一键插入示例任务与词汇</summary>
-          <div class="muted">将为“英语二 / 政治 / 生化 / 分子生物学 / 微生物”插入若干示例任务；词汇卡片插入 6 条示例。</div>
-          <label class="row" style="margin-top:6px"><input type="checkbox" id="obSeed" checked> 插入示例数据</label>
+          <summary>W1｜8/12–8/17：打底与总览</summary>
+          <ul>
+            <li><b>专业课A 生化：</b>代谢总览、酶动力学与能量概念；章后基础题。</li>
+            <li><b>专业课B 分子：</b>DNA结构与复制框架；绘制“中心法则”图。</li>
+            <li><b>专业课C 微生：</b>细胞结构、营养与生长曲线。</li>
+            <li><b>英语二：</b>词汇启动；2010阅读1–2篇精读。</li>
+            <li><b>政治：</b>讲义框架+1000题每日20题。</li>
+            <li><b>本周测：</b>生化/分子各10题小测；导图1.0成稿。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W2｜8/18–8/24：代谢主线 + 修复重组</summary>
+          <ul>
+            <li><b>生化：</b>糖代谢（糖酵解/TCA/氧化磷酸化）。</li>
+            <li><b>分子：</b>修复/重组与复制调控。</li>
+            <li><b>微生：</b>代谢类型与产能；灭菌/抑菌基础。</li>
+            <li><b>英语二：</b>2010–2011阅读/完形交替（3–4篇）。</li>
+            <li><b>政治：</b>1000题每日30题；马原框架。</li>
+            <li><b>测：</b>代谢通路手绘+机理问答5题。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W3｜8/25–8/31：脂代谢 + 转录/RNA加工</summary>
+          <ul>
+            <li><b>生化：</b>脂代谢（合成/分解/β氧化/酮体）。</li>
+            <li><b>分子：</b>转录与RNA加工（剪接/编辑）。</li>
+            <li><b>微生：</b>遗传与变异、基因水平转移。</li>
+            <li><b>英语二：</b>2011–2012继续；作文素材积累5条。</li>
+            <li><b>政治：</b>毛中特导图+1000题跟进。</li>
+            <li><b>测：</b>转录/翻译概念卡+微生遗传10题。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W4｜9/1–9/7：氨基酸/核苷酸代谢 + 翻译</summary>
+          <ul>
+            <li><b>生化：</b>氨基酸代谢+尿素循环；核苷酸代谢。</li>
+            <li><b>分子：</b>翻译与翻译后修饰。</li>
+            <li><b>微生：</b>病原微生物概述与致病机制概念。</li>
+            <li><b>英语二：</b>2012–2013阅读+翻译1篇。</li>
+            <li><b>政治：</b>史纲框架；1000题进度≥40%。</li>
+            <li><b>测：</b>综合题1套（30–40分钟）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W5｜9/8–9/14：代谢整合 + 表达调控 + 抗菌药与耐药</summary>
+          <ul>
+            <li><b>生化：</b>代谢整合与激素调控（胰高/胰岛素等）。</li>
+            <li><b>分子：</b>基因表达调控（原核与真核比较）。</li>
+            <li><b>微生：</b>抗菌药作用机制与耐药。</li>
+            <li><b>英语二：</b>2013–2014完整2套（分天做）。</li>
+            <li><b>政治：</b>毛中特/时政要点周整理。</li>
+            <li><b>测：</b>错题回炉+整合题训练。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W6｜9/15–9/21：信号通路 + 分子克隆/测序 + 培养鉴定</summary>
+          <ul>
+            <li><b>生化：</b>膜受体/信号通路概览；实验方法（电泳/层析）。</li>
+            <li><b>分子：</b>分子克隆、测序、CRISPR基础认识。</li>
+            <li><b>微生：</b>培养/鉴定/灭菌流程与实验设计。</li>
+            <li><b>英语二：</b>2014–2015；作文模板初版。</li>
+            <li><b>政治：</b>1000题进度≥65%。</li>
+            <li><b>测：</b>小综合卷（客观题为主）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W7｜9/22–9/28：二轮起步（易错专题化）</summary>
+          <ul>
+            <li><b>专题：</b>生化整合、分子调控、微生耐药三块交替。</li>
+            <li><b>英语二：</b>2015–2016并开始限时（阅读每篇≤18–20min）。</li>
+            <li><b>政治：</b>1000题收尾在望；错题本归类。</li>
+            <li><b>测：</b>二轮首测（限时60–90min）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W8｜9/29–10/5：实验设计/综合大题周</summary>
+          <ul>
+            <li><b>专题：</b>每两天一题综合/实验设计题，语言模板打磨。</li>
+            <li><b>英语二：</b>2016复盘+作文10个高分句背诵。</li>
+            <li><b>政治：</b>1000题基本完成；客观题专题二刷。</li>
+            <li><b>测：</b>阶段卷1（专业课为主）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W9｜10/6–10/12：代谢整合图重绘 + 调控归纳</summary>
+          <ul>
+            <li><b>专题：</b>代谢整合图重绘；基因表达调控真题归纳。</li>
+            <li><b>英语二：</b>2017全套精做。</li>
+            <li><b>政治：</b>主攻马原逻辑题型；错题回炉。</li>
+            <li><b>测：</b>英语限时套题1次；专业课综合题3题。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W10｜10/13–10/19：微生综合 + 英语2018</summary>
+          <ul>
+            <li><b>专题：</b>微生（致病+耐药+消毒）综合。</li>
+            <li><b>英语二：</b>2018全套；作文（图表/应用文）各练1篇。</li>
+            <li><b>政治：</b>毛中特选择题模块化训练。</li>
+            <li><b>测：</b>周测一套+错题再做。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W11｜10/20–10/26：薄弱清单逐项击破 + 英语2019</summary>
+          <ul>
+            <li><b>专题：</b>三科薄弱点逐项击破（列表+对策）。</li>
+            <li><b>英语二：</b>2019全套；翻译强化。</li>
+            <li><b>政治：</b>史纲/思修轮转训练。</li>
+            <li><b>测：</b>专业课半套×2（限时）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W12｜10/27–11/2：三轮启动 + 英语2020</summary>
+          <ul>
+            <li><b>专业课：</b>按真题考点频次复习+背诵机制链。</li>
+            <li><b>英语二：</b>2020全套；作文模板库升级到20条句式。</li>
+            <li><b>政治：</b>时政月总结；客观题正确率目标≥70%。</li>
+            <li><b>测：</b>综合卷1（含英语/专业课）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W13｜11/3–11/9：套卷周 + 肖八上场</summary>
+          <ul>
+            <li><b>专业课：</b>每周1套综合卷，回看解析与错题。</li>
+            <li><b>英语二：</b>2021全套；限时严格。</li>
+            <li><b>政治：</b><b>肖八</b>到手即做（2–3天做完1套）。</li>
+            <li><b>测：</b>肖八选择题统计+错因分析表。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W14｜11/10–11/16：专题背诵 + 再套卷</summary>
+          <ul>
+            <li><b>专业课：</b>专题背诵与再套卷，语言要精准。</li>
+            <li><b>英语二：</b>2022全套；作文40分钟完稿练习。</li>
+            <li><b>政治：</b>肖八第二套+主观题初背。</li>
+            <li><b>测：</b>专业课综合题抽测（开卷→闭卷）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W15｜11/17–11/23：错题清零周 + 英语2023</summary>
+          <ul>
+            <li><b>专业课：</b>错题清零（每天30分钟错题回炉）。</li>
+            <li><b>英语二：</b>2023全套；阅读错项归因法。</li>
+            <li><b>政治：</b>时政总结2.0；知识框架再梳理。</li>
+            <li><b>测：</b>全真综合模拟1次（半天）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W16｜11/24–11/30：模板定稿 + 英语2024</summary>
+          <ul>
+            <li><b>专业课：</b>答题模板定稿（大题/实验题）。</li>
+            <li><b>英语二：</b>2024全套；翻译与新题型补短板。</li>
+            <li><b>政治：</b>回顾肖八；主观题金句分类卡。</li>
+            <li><b>测：</b>全真综合模拟1次（半天）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W17｜12/1–12/7：限时背诵与半套滚动</summary>
+          <ul>
+            <li><b>专业课：</b>每2天半套限时；背诵“机制链/通路表”。</li>
+            <li><b>英语二：</b>套题穿插（旧题回放），作文素材滚动。</li>
+            <li><b>政治：</b><b>肖四</b>主观题背诵开始+选择题日常回练。</li>
+            <li><b>测：</b>专业课限时+英语限时各1次。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W18｜12/8–12/14：冲刺回炉 + 全真模拟</summary>
+          <ul>
+            <li><b>专业课：</b>背诵与题交替；实验/综合题语言打磨。</li>
+            <li><b>英语二：</b>模拟1套（严格计时），作文模板最后定稿。</li>
+            <li><b>政治：</b>肖四二刷；预测卷择优做1–2套。</li>
+            <li><b>测：</b>全真综合模拟1次（上午+下午连做）。</li>
+          </ul>
+        </details>
+
+        <details>
+          <summary>W19｜12/15–12/20（考前周）：最后一公里</summary>
+          <ul>
+            <li><b>专业课：</b>高频机制/通路/易混表格清单滚背。</li>
+            <li><b>英语二：</b>作文/翻译模板快过；阅读旧题2篇维持手感。</li>
+            <li><b>政治：</b>肖四主观题滚背；选择题每日小测20题。</li>
+            <li><b>身心：</b>作息稳定、轻运动、睡眠第一；考前一天仅轻背+心态建设。</li>
+          </ul>
         </details>
       </div>
-      <div class="row" style="justify-content:flex-end; margin-top:14px">
-        <button class="btn ghost" value="cancel">跳过</button>
-        <button class="btn primary" value="ok">完成</button>
+    </section>
+
+    <!-- 方法与资料 -->
+    <section id="methods" class="grid grid-2" style="margin-top:18px">
+      <div class="card">
+        <h2>专业课复习法（生化/分子/微生）</h2>
+        <ul>
+          <li><b>交叉串讲：</b>同主题在三门之间建立索引，如“蛋白→表达→蛋白相关实验”。</li>
+          <li><b>大题模板：</b>①定义→要素→机制/通路→调控→实验/应用；②现象→假设→实验设计（对照/变量/预期）→误差与改进。</li>
+          <li><b>记忆载体：</b>图表+流程箭头+对比表；代谢/通路“五连表”（起点/关键酶/能量收支/调控点/疾病联系）。</li>
+          <li><b>练习原则：</b>章后题+真题同类题，当天做当天订正；错题三色标记（红=知识空白、橙=审题表达、蓝=记忆模糊）。</li>
+          <li><b>周复述：</b>每周至少一次10分钟口述录音，自检逻辑完整度。</li>
+        </ul>
       </div>
-    </form>
-  </dialog>
+      <div class="card">
+        <h2>英语二与政治</h2>
+        <ul>
+          <li><b>英语真题顺序：</b>2010→2024；早期精读，近年限时。</li>
+          <li><b>阅读方法：</b>定位→同义改写→陷阱库（绝对化/偷换概念/无中生有）。</li>
+          <li><b>翻译四步：</b>找谓语→从句→非谓语→介词短语，每日2–3句。</li>
+          <li><b>写作模板：</b>大小作文分块（开头态度/三分论点/让步转折/结尾升华），自建10–20句万能句。</li>
+          <li><b>政治主线：</b>1000题一刷→错题二刷→11月肖八→12月肖四；主观题背诵“核心点→分点→时政例证→总结”。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 打卡与复盘模板 -->
+    <section id="review" class="card" style="margin-top:18px">
+      <h2>打卡与复盘模板</h2>
+      <div class="grid grid-2">
+        <div>
+          <h3>每日三件事</h3>
+          <ul>
+            <li>✅ 当天新知3条（专业课）</li>
+            <li>✅ 英语二“好句/好结构”2条</li>
+            <li>✅ 政治错题再做10题</li>
+          </ul>
+        </div>
+        <div>
+          <h3>错题复盘卡（示例字段）</h3>
+          <p>题目：____ 科目：____ 错因：概念不清/审题不清/记忆缺口/表述问题<br/>补救：教材页码__，笔记位置__，再次练习日期（+3,+7,+14）</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="muted" style="margin-top:24px; text-align:center">祝顺利上岸！— 本页面支持打印与本地打卡保存。</footer>
+  </main>
 
   <script>
-  // ===== 基础工具 =====
-  const KEYP = 'ke_bio_v1_'; // ← 全新前缀：不会读取旧版数据
-  const store = {
-    get(k, def){ try{ const v = localStorage.getItem(KEYP+k); return v ? JSON.parse(v) : (def ?? null)}catch{ return def ?? null } },
-    set(k, v){ localStorage.setItem(KEYP+k, JSON.stringify(v)); },
-    del(k){ localStorage.removeItem(KEYP+k); },
-    all(){ const o={}; try{ for(let i=0;i<localStorage.length;i++){ const k = localStorage.key(i); if(k && k.startsWith(KEYP)){ try{o[k]=JSON.parse(localStorage.getItem(k))}catch{} } } }catch{} return o; }
-  };
-  window.__KE_PREFIX__ = KEYP;
+    // ——— 主题切换与持久化 ———
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem('gf_plan_theme') || 'dark';
+    if(savedTheme === 'light') root.setAttribute('data-theme','light');
 
-  const $ = sel => document.querySelector(sel);
-  const $$ = sel => Array.from(document.querySelectorAll(sel));
-  const fmt2 = n => String(n).padStart(2,'0');
-  const todayKey = (d=new Date()) => `${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())}`;
-  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-  const ymd = d => `${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())}`;
-  const monday = d => { const t=new Date(d); const w=(t.getDay()+6)%7; t.setDate(t.getDate()-w); t.setHours(0,0,0,0); return t; };
-  const addDays = (d, n) => { const t=new Date(d); t.setDate(t.getDate()+n); return t; };
+    document.getElementById('toggleTheme').addEventListener('click', () => {
+      const isLight = root.getAttribute('data-theme') === 'light';
+      root.setAttribute('data-theme', isLight ? '' : 'light');
+      localStorage.setItem('gf_plan_theme', isLight ? 'dark' : 'light');
+    });
 
-  // 主题 & 时钟
-  const themeBtn = $('#themeBtn');
-  function applyTheme(){ document.documentElement.setAttribute('data-theme', store.get('theme','dark')); }
-  if(store.get('theme', null)===null){ store.set('theme','dark'); }
-  themeBtn.onclick = () => { const t = store.get('theme','dark')==='dark'?'light':'dark'; store.set('theme', t); applyTheme(); };
-  applyTheme();
-  function tickNow(){ const d=new Date(); const s=`${d.getFullYear()}-${fmt2(d.getMonth()+1)}-${fmt2(d.getDate())} ${fmt2(d.getHours())}:${fmt2(d.getMinutes())}:${fmt2(d.getSeconds())}`; $('#now').textContent=s; }
-  setInterval(tickNow, 1000); tickNow();
+    // ——— 今日日期徽章 ———
+    const todayEl = document.getElementById('today');
+    const today = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const keyDate = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+    todayEl.textContent = `今日：${keyDate}`;
 
-  // —— 默认时间表 / 阶段
-  const defaultTT = [
-    {time:'07:30–08:00', title:'英语热身（词汇/朗读）'},
-    {time:'08:00–09:50', title:'生化 精读 + 例题（番茄 50/10 ×2）'},
-    {time:'10:00–11:50', title:'英语二 长难句/阅读（分项）'},
-    {time:'12:00–13:20', title:'午餐 + 休息20min'},
-    {time:'13:30–15:20', title:'分子生物学 精读 + 题目'},
-    {time:'15:30–16:20', title:'政治 1000题 选择训练（40–50题）'},
-    {time:'16:30–17:15', title:'微生物 记忆/框架复盘'},
-    {time:'17:45–18:15', title:'晚餐'},
-    {time:'19:00–20:20', title:'英语二 真题/翻译/作文'},
-    {time:'20:30–21:20', title:'专业课轮背（生化/分子/微生）'},
-    {time:'21:20–22:00', title:'复盘卡（错题3条/收获3条/明日3事）'}
-  ];
-  const phases = [
-    {name:'阶段1｜基础夯实', weeks:4, goals:{
-      eng:'长难句 20句/周；阅读 6篇/周；翻译段落 2 段/周',
-      pol:'《1000题》第一遍：选择题 50题/日 ×5天',
-      bio:'生化：代谢/酶/蛋白质结构通读+配套题',
-      mol:'分子：DNA 复制/转录/翻译框架与核心机制',
-      mic:'微生：细菌/真菌/病毒基础 + 常见菌属识记'
-    }},
-    {name:'阶段2｜二刷与专题突破', weeks:4, goals:{
-      eng:'分项强化（阅读/翻译/完形/新题型）；作文素材 2 篇/周',
-      pol:'《1000题》第二遍 + 主观题框架',
-      bio:'生化专题：糖代谢/脂代谢/氨基酸代谢整合',
-      mol:'分子：基因表达调控/基因工程与载体',
-      mic:'微生：培养/染色/灭菌消毒/抗菌药基础'
-    }},
-    {name:'阶段3｜真题主攻', weeks:4, goals:{
-      eng:'真题整套 每周 1–2 套；作文 A/B 各 1 篇',
-      pol:'选择题第三遍 + 时政开始整理',
-      bio:'生化真题/模拟题：3 天一套 + 2 天剖析',
-      mol:'分子综合大题：每周 1–2 次仿真书写',
-      mic:'微生高频名词解释/简答滚动背诵'
-    }},
-    {name:'阶段4｜模拟拔高', weeks:4, goals:{
-      eng:'周末全真；工作日纠错 + 语法/翻译薄弱环',
-      pol:'主观题模板定稿 + 时政强化',
-      bio:'生化错题清零 + 高频易混梳理',
-      mol:'分子要点卡片化 + 图表过一遍',
-      mic:'微生案例/实验设计题训练'
-    }},
-    {name:'阶段5｜冲刺查缺', weeks:3, goals:{
-      eng:'作文每日快写 1 篇；完形/新题型轻维护',
-      pol:'背诵每日三遍（早/午/晚）；预测题回看',
-      bio:'生化/分子/微生 高频考点每日滚动背',
-      mol:'错题二次订正（按错误类型归档）',
-      mic:'名词解释/简答速背+默写'
-    }}
-  ];
+    // ——— 每日打卡持久化（按日期存储） ———
+    const KEY = (d)=>`gf_plan_daily_${d}`;
+    const dailyBody = document.getElementById('dailyBody');
+    const notes = document.getElementById('notes');
 
-  // —— 首次加载：写入默认数据（不会覆盖已有数据）
-  function seedTasksBio(){
-    const d = ymd(new Date());
-    return [
-      {id:crypto.randomUUID(), title:'真题阅读 1 篇 + 精读（标生词/结构）', subject:'英语二', due:d, pri:'P1', est:50, done:false, createdAt:Date.now()},
-      {id:crypto.randomUUID(), title:'长难句 10 句 + 翻译 2 段', subject:'英语二', due:d, pri:'P2', est:45, done:false, createdAt:Date.now()},
-      {id:crypto.randomUUID(), title:'《1000题》选择 40–50 题（马原/思修任一）', subject:'政治', due:d, pri:'P2', est:40, done:false, createdAt:Date.now()},
-      {id:crypto.randomUUID(), title:'生化 · 糖代谢通路梳理 + 例题 3 题', subject:'生化', due:d, pri:'P1', est:90, done:false, createdAt:Date.now()},
-      {id:crypto.randomUUID(), title:'分子生物学 · DNA 复制机制要点 + 例题 2 题', subject:'分子生物学', due:d, pri:'P2', est:70, done:false, createdAt:Date.now()},
-      {id:crypto.randomUUID(), title:'微生物 · 细菌形态/培养基记忆（30min）', subject:'微生物', due:d, pri:'P3', est:30, done:false, createdAt:Date.now()}
-    ];
-  }
-
-  function ensureDefaults(){
-    if(!store.get('examDate', null)) store.set('examDate', '2025-12-20');
-    if(store.get('goalMin', null)==null) store.set('goalMin', 180);
-    if(!store.get('timetable', null)) store.set('timetable', defaultTT);
-
-    if(!store.get('phaseWeeks', null)){
-      const weeks = [];
-      let cur = monday(new Date()); // 从本周一开始顺排 19 周
-      phases.forEach(ph=>{
-        for(let i=0;i<ph.weeks;i++){
-          const s = new Date(cur);
-          const e = addDays(cur, 6);
-          weeks.push({idx: weeks.length+1, phase: ph.name, start: ymd(s), end: ymd(e), goals: ph.goals});
-          cur = addDays(cur, 7);
-        }
+    function loadState(){
+      const data = JSON.parse(localStorage.getItem(KEY(keyDate))||'{}');
+      dailyBody.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+        cb.checked = !!data[cb.dataset.task];
       });
-      store.set('phaseWeeks', weeks);
-      store.set('curWeekIdx', 1);
+      notes.value = data.__notes || '';
     }
-
-    if(store.get('tasks', null)===null){
-      store.set('tasks', seedTasksBio()); // ← 直接预置新学科任务
+    function saveState(){
+      const data = {};
+      dailyBody.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+        data[cb.dataset.task] = cb.checked;
+      });
+      data.__notes = notes.value || '';
+      localStorage.setItem(KEY(keyDate), JSON.stringify(data));
     }
-  }
-  ensureDefaults();
-
-  // 倒计时
-  const examDateInput = $('#examDate');
-  function readExamDate(){ const s = store.get('examDate', null); if(s) examDateInput.value = s; }
-  function saveExamDate(){ const v = examDateInput.value; if(v) store.set('examDate', v); }
-  examDateInput.addEventListener('change', ()=>{ saveExamDate(); updateCountdown(); buildCalendar(); });
-  function updateCountdown(){
-    const s = examDateInput.value; const dLeftEl = $('#dLeft');
-    if(!s){ dLeftEl.textContent = '--'; return; }
-    const tgt = new Date(s+'T00:00:00'); const now = new Date();
-    const ms = tgt - now; const days = Math.ceil(ms / 86400000);
-    dLeftEl.textContent = days >= 0 ? days : 0;
-  }
-  readExamDate(); updateCountdown(); setInterval(updateCountdown, 60000);
-
-  // 番茄钟
-  const cfg = { work: store.get('cfg_work',25), short: store.get('cfg_short',5), long: store.get('cfg_long',15), every: store.get('cfg_every',4) };
-  $('#cfgWork').value = cfg.work; $('#cfgShort').value = cfg.short; $('#cfgLong').value = cfg.long; $('#cfgEvery').value = cfg.every;
-  ['cfgWork','cfgShort','cfgLong','cfgEvery'].forEach(id=>{
-    $('#'+id).addEventListener('change',()=>{
-      cfg.work=+$('#cfgWork').value; cfg.short=+$('#cfgShort').value; cfg.long=+$('#cfgLong').value; cfg.every=+$('#cfgEvery').value;
-      store.set('cfg_work',cfg.work); store.set('cfg_short',cfg.short); store.set('cfg_long',cfg.long); store.set('cfg_every',cfg.every);
-      if(state.mode==='work') state.left=cfg.work*60; renderPomodoro();
+    dailyBody.addEventListener('change', saveState);
+    notes.addEventListener('input', ()=>{ // 节流
+      if(window._notesTimer) cancelAnimationFrame(window._notesTimer);
+      window._notesTimer = requestAnimationFrame(saveState);
     });
-  });
-  const state = { mode: 'work', left: cfg.work*60, running: false, timer: null, cycle: store.get('cycle',1) };
-  function setMode(m){ state.mode=m; if(m==='work') state.left=cfg.work*60; if(m==='short') state.left=cfg.short*60; if(m==='long') state.left=cfg.long*60; renderPomodoro(); }
-  function nextMode(){ if(state.mode==='work'){ if(state.cycle % cfg.every === 0){ setMode('long'); } else { setMode('short'); } } else { state.cycle++; store.set('cycle', state.cycle); setMode('work'); } }
-  function renderPomodoro(){
-    $('#time').textContent = `${fmt2(Math.floor(state.left/60))}:${fmt2(Math.floor(state.left%60))}`;
-    $('#modeLabel').textContent = state.mode==='work'?'专注模式':(state.mode==='short'?'短休模式':'长休模式');
-    $('#cycleInfo').textContent = `第 ${state.cycle} 轮`;
-    $$('.modes .btn').forEach(b=>{ b.classList.toggle('active', b.dataset.mode===state.mode); });
-  }
-  function tick(){ if(!state.running) return; state.left--; if(state.left<=0){ completeSession(); nextMode(); } renderPomodoro(); }
-  function start(){ if(state.running) return; state.running=true; state.timer=setInterval(tick, 1000); $('#startPause').textContent='暂停'; }
-  function pause(){ state.running=false; clearInterval(state.timer); $('#startPause').textContent='开始'; }
-  function reset(){ pause(); setMode(state.mode); }
-  $('#startPause').onclick=()=>{ state.running?pause():start(); };
-  $('#skip').onclick=()=>{ nextMode(); reset(); };
-  $('#reset').onclick=()=>{ reset(); };
-  function logToday(min, pom=1){
-    const key = 'log_'+todayKey();
-    const o = store.get(key,{min:0,pom:0, tasks:0});
-    o.min += min; o.pom += pom; store.set(key,o);
-    updateTodayProgress(); updateKPIs(); drawCharts(); updateGoalBadge(); markCalendarAuto();
-  }
-  function completeSession(){ if(state.mode==='work'){ logToday(cfg.work,1); } }
-
-  function getAggregates(rangeDays=14){
-    const arr=[]; const today=new Date();
-    for(let i=rangeDays-1;i>=0;i--){ const d=new Date(today); d.setDate(d.getDate()-i); const k='log_'+todayKey(d); const o=store.get(k,{min:0,pom:0,tasks:0}); arr.push({date:todayKey(d),...o}); }
-    return arr;
-  }
-  function updateKPIs(){
-    const now=new Date(); const dow=(now.getDay()+6)%7; // Mon=0
-    const wkStart=new Date(now); wkStart.setDate(now.getDate()-dow);
-    let wk=0, mo=0; for(let i=0;i<31;i++){ const d=new Date(now); d.setDate(now.getDate()-i); const k='log_'+todayKey(d); const o=store.get(k,{min:0}); if(d>=wkStart) wk+=o.min; if(d.getMonth()===now.getMonth()) mo+=o.min; }
-    $('#wkMin').textContent=wk; $('#moMin').textContent=mo;
-    let streak=0; for(let i=0;i<999;i++){ const d=new Date(now); d.setDate(now.getDate()-i); const k='log_'+todayKey(d); const o=store.get(k,null); const goal=+($('#goalMin').value||180); if(o && o.min>=goal) streak++; else break; }
-    $('#streak').textContent=streak;
-  }
-  const goalMin = $('#goalMin'); goalMin.addEventListener('change',()=>{ store.set('goalMin', +goalMin.value); updateGoalBadge(); buildCalendar(); updateKPIs(); }); goalMin.value = store.get('goalMin', 180);
-  function updateTodayProgress(){ const o=store.get('log_'+todayKey(),{min:0,pom:0,tasks:0}); $('#todayProgress').textContent=`今日专注 ${o.min} 分钟 · ${o.pom} 个番茄 · ${o.tasks||0} 个任务`; }
-  function updateGoalBadge(){ const goal=+goalMin.value; const o=store.get('log_'+todayKey(),{min:0}); const hit = o.min>=goal; const b=$('#goalHit'); b.textContent = hit? '已达成' : '未达成'; b.style.background = hit? 'linear-gradient(135deg, var(--ok), #90e6c2)' : 'var(--panel-hi)'; }
-  updateTodayProgress(); updateGoalBadge(); updateKPIs();
-
-  // 待办
-  let tasks = store.get('tasks', []);
-  const subjects = ['英语二','政治','生化','分子生物学','微生物','其他'];
-  const filterBar = $('#filterBar');
-  let curFilter = store.get('filter','全部');
-  function renderFilters(){
-    filterBar.innerHTML='';
-    ['全部',...subjects].forEach(s=>{
-      const b=document.createElement('button'); b.className='btn pill'+(curFilter===s?' active':''); b.textContent=s; b.onclick=()=>{ curFilter=s; store.set('filter',s); renderTasks(); renderFilters(); };
-      filterBar.appendChild(b);
-    })
-  }
-  renderFilters();
-
-  function addTask(t){ tasks.push(t); store.set('tasks', tasks); renderTasks(); }
-  function removeTask(id){ tasks = tasks.filter(x=>x.id!==id); store.set('tasks', tasks); renderTasks(); }
-  function updateTask(id,patch){ const i=tasks.findIndex(x=>x.id===id); if(i>-1){ tasks[i]=Object.assign({},tasks[i],patch); store.set('tasks', tasks); renderTasks(); } }
-  function renderTasks(){
-    const box = $('#taskList'); box.innerHTML='';
-    let arr = tasks.slice().sort((a,b)=>a.done-b.done || (a.pri>b.pri?1:-1) || (a.due||'').localeCompare(b.due||''));
-    if(curFilter!=='全部') arr = arr.filter(t=>t.subject===curFilter);
-    arr.forEach(t=> box.appendChild(renderTaskItem(t)));
-  }
-  function renderTaskItem(t){
-    const el=document.createElement('div'); el.className='task'+(t.done?' done':''); el.draggable=true; el.dataset.id=t.id;
-    el.innerHTML=`<input type="checkbox" ${t.done?'checked':''} aria-label="完成任务">
-      <div>
-        <div class="title">${escapeHtml(t.title)} <span class="tag">${t.subject}</span></div>
-        <div class="meta">优先级: ${t.pri} ${t.due?(' · 截止: '+t.due):''} · 预计: ${t.est||25}分</div>
-      </div>
-      <div class="row">
-        <button class="btn icon" data-act="inc">＋5分</button>
-        <button class="btn icon" data-act="edit">✎</button>
-        <button class="btn icon" data-act="del">🗑</button>
-      </div>`;
-    el.querySelector('input').onchange = (e)=>{ updateTask(t.id,{done:e.target.checked}); if(e.target.checked){
-        const key='log_'+todayKey(); const lg = store.get(key,{min:0,pom:0,tasks:0}); lg.tasks=(lg.tasks||0)+1; store.set(key,lg); updateTodayProgress(); drawCharts(); updateGoalBadge(); updateKPIs(); buildCalendar();
-    }}; 
-    el.querySelector('[data-act="del"]').onclick=()=> removeTask(t.id);
-    el.querySelector('[data-act="inc"]').onclick=()=> { updateTask(t.id,{est:(t.est||25)+5}); };
-    el.querySelector('[data-act="edit"]').onclick=()=> editTask(t);
-    el.addEventListener('dragstart',()=>{ el.classList.add('dragging'); });
-    el.addEventListener('dragend',()=>{ el.classList.remove('dragging'); saveOrder(); });
-    el.addEventListener('dragover',(e)=>{ e.preventDefault(); const dragging = document.querySelector('.task.dragging'); if(!dragging||dragging===el) return; const box=el.parentElement; const items=[...box.children]; const draggingIdx=items.indexOf(dragging); const elIdx=items.indexOf(el); if(draggingIdx<elIdx){ box.insertBefore(dragging, el.nextSibling);} else { box.insertBefore(dragging, el);} });
-    return el;
-  }
-  function saveOrder(){ const ids=[...$('#taskList').children].map(n=>n.dataset.id); tasks.sort((a,b)=> ids.indexOf(a.id)-ids.indexOf(b.id)); store.set('tasks', tasks); }
-  function editTask(t){ const nv = prompt('修改任务内容', t.title); if(nv!==null){ updateTask(t.id,{title:nv}); }}
-  function escapeHtml(s){ return String(s).replace(/[&<>\"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-
-  $('#addTask').onclick=()=> doAdd();
-  function doAdd(){
-    const title=$('#taskTitle').value.trim(); if(!title){ $('#taskTitle').focus(); return; }
-    const subject=$('#taskSubject').value; const due=$('#taskDue').value||null; const pri=$('#taskPri').value; const est=25;
-    addTask({id:crypto.randomUUID(), title, subject, due, pri, est, done:false, createdAt:Date.now()});
-    $('#taskTitle').value=''; $('#taskTitle').focus();
-  }
-  $('#taskTitle').addEventListener('keydown',e=>{ if(e.key==='Enter'){ doAdd(); }});
-  $('#clearDone').onclick=()=>{ if(confirm('确认删除所有已完成任务？')){ tasks=tasks.filter(t=>!t.done); store.set('tasks',tasks); renderTasks(); }}
-  $('#tplBtn').onclick=()=> insertTemplates();
-
-  function insertTemplates(){
-    const tpl=[
-      {s:'英语二', t:'真题阅读 1 篇 + 精读（标生词/结构）'},
-      {s:'英语二', t:'长难句 10 句 + 翻译 2 段'},
-      {s:'政治', t:'1000题 · 马原/思修 40–50 题'},
-      {s:'生化', t:'代谢总览框架图 + 例题 3 题'},
-      {s:'分子生物学', t:'基因表达调控要点 + 例题 2 题'},
-      {s:'微生物', t:'灭菌/消毒方法与原理（30min）'}
-    ];
-    tpl.forEach(x=> addTask({id:crypto.randomUUID(), title:x.t, subject:x.s, due:null, pri:'P2', est:25, done:false, createdAt:Date.now()}));
-  }
-  renderTasks();
-
-  // 打卡日历
-  let curYM = (d=>({y:d.getFullYear(), m:d.getMonth()+1}))(new Date());
-  function buildCalendar(){
-    const y=curYM.y, m=curYM.m; $('#ymLabel').textContent=`${y}年${m}月`;
-    const box=$('#calendar'); box.innerHTML='';
-    const first=new Date(y, m-1, 1); const startDow=(first.getDay()+6)%7;
-    const days=new Date(y, m, 0).getDate();
-    for(let i=0;i<startDow;i++){ const ph=document.createElement('div'); box.appendChild(ph); }
-    for(let d=1; d<=days; d++){
-      const el=document.createElement('div'); el.className='day';
-      const dateStr=`${y}-${fmt2(m)}-${fmt2(d)}`;
-      const lg=store.get('log_'+dateStr,null); const goal=+($('#goalMin').value||180);
-      const good = lg && (lg.min||0) >= goal; const bad = lg && (lg.min||0) > 0 && (lg.min||0) < goal;
-      if(good) el.classList.add('good'); if(bad) el.classList.add('bad');
-      el.innerHTML=`<div class="d">${d}</div><div class="dot"></div>`;
-      el.title = `${dateStr}：专注 ${(lg?.min||0)} 分钟 · 番茄 ${(lg?.pom||0)} · 任务 ${(lg?.tasks||0)}`;
-      el.onclick=()=>{ const o = store.get('log_'+dateStr,{min:0,pom:0,tasks:0}); const goal=+($('#goalMin').value||180); const newMin = (o.min>=goal)?0:goal; o.min=newMin; store.set('log_'+dateStr,o); if(dateStr===todayKey()) { updateGoalBadge(); updateTodayProgress(); updateKPIs(); } buildCalendar(); drawCharts(); };
-      box.appendChild(el);
-    }
-  }
-  function markCalendarAuto(){ buildCalendar(); }
-  $('#prevMonth').onclick=()=>{ const d=new Date(curYM.y,curYM.m-2,1); curYM={y:d.getFullYear(), m:d.getMonth()+1}; buildCalendar(); };
-  $('#nextMonth').onclick=()=>{ const d=new Date(curYM.y,curYM.m,1); curYM={y:d.getFullYear(), m:d.getMonth()+1}; buildCalendar(); };
-  $('#markToday').onclick=()=>{ const t=todayKey(); const o=store.get('log_'+t,{min:0,pom:0,tasks:0}); const g=+($('#goalMin').value||180); o.min=Math.max(o.min, g); store.set('log_'+t,o); updateGoalBadge(); updateTodayProgress(); updateKPIs(); buildCalendar(); };
-  buildCalendar();
-
-  // 笔记
-  const editor=$('#editor'); editor.innerHTML = store.get('notes','');
-  editor.addEventListener('input',()=> store.set('notes', editor.innerHTML));
-  $$('.toolbar [data-cmd]').forEach(b=> b.onclick=()=> document.execCommand(b.dataset.cmd,false,null));
-  $('#h1Btn').onclick=()=> document.execCommand('formatBlock', false, 'H2');
-  $('#clearNotes').onclick=()=>{ if(confirm('是否清空笔记？此操作不可撤销。')){ editor.innerHTML=''; store.set('notes',''); }}
-
-  // 词汇
-  let vocabs = store.get('vocabs', []);
-  function saveVocabs(){ store.set('vocabs', vocabs); renderCards(); }
-  function addCard(w,m){ vocabs.push({id:crypto.randomUUID(), w, m, ef:2.5, due: Date.now() }); saveVocabs(); }
-  $('#addVocab').onclick=()=>{ const w=$('#vWord').value.trim(); const m=$('#vMean').value.trim(); if(!w||!m) return; addCard(w,m); $('#vWord').value=''; $('#vMean').value=''; };
-  $('#shuffle').onclick=()=>{ vocabs.sort(()=>Math.random()-.5); saveVocabs(); };
-  function renderCards(){ const box=$('#vCards'); box.innerHTML=''; vocabs.forEach(v=>{ const c=document.createElement('div'); c.className='card'; c.innerHTML=`<div class="word">${escapeHtml(v.w)}</div><div class="mean">${escapeHtml(v.m)}</div><div class="row" style="justify-content:center; margin-top:6px"><button class="btn icon" data-act="del">🗑</button></div>`; c.querySelector('[data-act="del"]').onclick=()=>{ vocabs=vocabs.filter(x=>x.id!==v.id); saveVocabs(); }; box.appendChild(c); }); }
-  renderCards();
-  let quizQ=[], qi=0, showBack=false;
-  function startQuiz(){ quizQ = vocabs.slice().filter(v=> v.due <= Date.now()).sort(()=>Math.random()-.5); if(quizQ.length===0) quizQ=vocabs.slice().sort(()=>Math.random()-.5); qi=0; showBack=false; $('#quizBox').hidden=false; nextQ(); }
-  function nextQ(){ if(quizQ.length===0){ $('#quizBox').hidden=true; return; } const v=quizQ[qi%quizQ.length]; $('#qFront').textContent=v.w; $('#qBack').textContent=v.m; $('#qBack').hidden=true; $('#qMeta').textContent=`${(qi%quizQ.length)+1} / ${quizQ.length}`; showBack=false; }
-  $('#startQuiz').onclick=()=> startQuiz();
-  $('#reveal').onclick=()=>{ $('#qBack').hidden = !showBack; showBack = !showBack; };
-  $('#know').onclick=()=> score(5);
-  $('#dont').onclick=()=> score(2);
-  function score(q){ const v=quizQ[qi%quizQ.length];
-    const addMs = (q>=4) ? (86400000 * (2 + Math.random()*2)) : (600000 * (1 + Math.random()*5));
-    v.due = Date.now() + addMs; saveVocabs(); qi++; if(qi>=quizQ.length) { qi=0; quizQ=quizQ.filter(x=> x.due<=Date.now()); if(quizQ.length===0){ $('#quizBox').hidden=true; return; } }
-    nextQ();
-  }
-
-  // 统计图
-  function drawBar(canvasId, data, labelGetter, valueGetter){
-    const cvs=$(canvasId); if(!cvs) return; const ctx=cvs.getContext('2d'); if(!ctx) return; const DPR=window.devicePixelRatio||1; const W=cvs.clientWidth*DPR, H=cvs.clientHeight*DPR; cvs.width=W; cvs.height=H; ctx.clearRect(0,0,W,H);
-    const pad=20*DPR; const innerW=W-pad*2; const innerH=H-pad*2; ctx.font = 12*DPR+'px '+getComputedStyle(document.body).fontFamily; ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--muted');
-    const max = Math.max(1, ...data.map(valueGetter));
-    const n=data.length; const barW=innerW/n*0.72; const gap=(innerW/n - barW);
-    ctx.globalAlpha=.5; ctx.fillRect(pad, pad+innerH, innerW, 1); ctx.globalAlpha=1;
-    data.forEach((d,i)=>{
-      const v=valueGetter(d); const h= v/max * (innerH-10*DPR); const x=pad + i*(barW+gap) + gap/2; const y=pad+innerH - h;
-      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--brand'); ctx.fillRect(x, y, barW, h);
-      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text'); ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillText(String(v), x+barW/2, y-2*DPR);
-      ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--muted'); ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(labelGetter(d), x+barW/2, pad+innerH + 12*DPR);
-    });
-  }
-  function drawCharts(){
-    const agg=getAggregates(14);
-    drawBar('#chartMin', agg, d=>d.date.slice(5), d=>d.min);
-    drawBar('#chartTask', agg, d=>d.date.slice(5), d=>d.tasks||0);
-  }
-  window.addEventListener('resize', drawCharts); drawCharts();
-
-  // 链接
-  let links = store.get('links', []);
-  function renderLinks(){ const box=$('#links'); box.innerHTML=''; links.forEach(l=>{ const a=document.createElement('div'); a.className='task'; a.innerHTML=`<div style="width:10px; height:10px; border-radius:50%; background:var(--brand)"></div>
-      <div><div class="title"><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">${escapeHtml(l.title)}</a></div>
-      <div class="meta">${escapeHtml(l.url)}</div></div>
-      <div class="row"><button class="btn icon" data-act="del">🗑</button></div>`; a.querySelector('[data-act="del"]').onclick=()=>{ links=links.filter(x=>x.id!==l.id); store.set('links',links); renderLinks(); }; box.appendChild(a); }); }
-  renderLinks();
-  $('#addLink').onclick=()=>{ const t=$('#linkTitle').value.trim(); const u=$('#linkUrl').value.trim(); if(!t||!u) return; links.push({id:crypto.randomUUID(), title:t, url:u}); store.set('links',links); renderLinks(); $('#linkTitle').value=''; $('#linkUrl').value=''; };
-
-  // 阶段周计划 & 时间表
-  function parseYMD(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y, m-1, d); }
-  function cnRange(a,b){ const A=parseYMD(a), B=parseYMD(b); return `${A.getMonth()+1}/${A.getDate()}–${B.getMonth()+1}/${B.getDate()}`; }
-  function renderWeekPlan(){
-    const ws = store.get('phaseWeeks', []);
-    if(!ws.length) return;
-    let idx = clamp(store.get('curWeekIdx',1), 1, ws.length);
-    store.set('curWeekIdx', idx);
-    const w = ws[idx-1];
-    $('#phaseLabel').textContent = w.phase;
-    $('#wkLabel').textContent = `第 ${w.idx} 周 · ${cnRange(w.start, w.end)}`;
-    const g = w.goals;
-    $('#wkGoals').innerHTML = [
-      `<li><b>英语二</b>：${g.eng}</li>`,
-      `<li><b>政治</b>：${g.pol}</li>`,
-      `<li><b>生化</b>：${g.bio}</li>`,
-      `<li><b>分子生物学</b>：${g.mol}</li>`,
-      `<li><b>微生物</b>：${g.mic}</li>`
-    ].join('');
-  }
-  function renderTimetable(){
-    const tt = store.get('timetable', []);
-    const html = tt.map(b=>`<div class="tt-row"><div class="tt-time">${b.time}</div><div>${escapeHtml(b.title)}</div></div>`).join('');
-    $('#ttBox').innerHTML = html;
-  }
-  const wkPrev = document.getElementById('wkPrev');
-  const wkNext = document.getElementById('wkNext');
-  if(wkPrev && wkNext){
-    wkPrev.onclick = ()=>{ const n = clamp(store.get('curWeekIdx',1)-1, 1, store.get('phaseWeeks',[]).length); store.set('curWeekIdx', n); renderWeekPlan(); };
-    wkNext.onclick = ()=>{ const n = clamp(store.get('curWeekIdx',1)+1, 1, store.get('phaseWeeks',[]).length); store.set('curWeekIdx', n); renderWeekPlan(); };
-  }
-
-  function majorMinorForWeek(weekIdx){
-    const order = ['生化','分子生物学','微生物'];
-    const major = order[(weekIdx-1)%3];
-    const minor = order[(weekIdx)%3];
-    return {major, minor};
-  }
-  const pushWeekBtn = document.getElementById('pushWeek');
-  if(pushWeekBtn){ pushWeekBtn.onclick = ()=> dispatchWeek(store.get('curWeekIdx',1)); }
-  const pushAllBtn = document.getElementById('pushAll');
-  if(pushAllBtn){
-    pushAllBtn.onclick = ()=>{
-      const ws = store.get('phaseWeeks', []);
-      if(!ws.length) return;
-      ws.forEach(w=> dispatchWeek(w.idx, false));
-      alert('已生成全部 19 周的待办清单（带各周截止日）。');
-      renderTasks();
-    };
-  }
-  function dispatchWeek(idx, showAlert=true){
-    const ws = store.get('phaseWeeks', []);
-    if(!ws.length) return;
-    const w = ws[clamp(idx,1,ws.length)-1];
-    const s = parseYMD(w.start);
-    const due = i => ymd(new Date(s.getFullYear(), s.getMonth(), s.getDate()+i));
-    const {major, minor} = majorMinorForWeek(w.idx);
-    const weekdayPack = [0,1,2,3,4].flatMap(i=>[
-      {t:`英语二 · 阅读/长难句分项（45–60min）`, s:'英语二', d:due(i), p:'P1', est:50},
-      {t:`政治 · 《1000题》选择 40–50题`, s:'政治', d:due(i), est:40},
-      {t:`${major} · 主修训练（精读+题目 90–110min）`, s:major, d:due(i), p:'P1', est:100},
-      {t:`${minor} · 记忆巩固（关键概念/名词解释 30min）`, s:minor, d:due(i), est:30}
-    ]);
-    const weekendPack = [
-      {t:`英语二 · 作文练习 1 篇（A/B 轮换）`, s:'英语二', d:due(5), est:40},
-      {t:`${major} · 综合大题仿真（90min）`, s:major, d:due(5), est:90},
-      {t:`政治 · 错题整理（40min）`, s:'政治', d:due(5), est:40},
-      {t:`周复盘：错题TOP5重做 + 得失总结（60min）`, s:'其他', d:due(6), est:60},
-      {t:`下周三件大事规划（20min）`, s:'其他', d:due(6), est:20}
-    ];
-    [...weekdayPack, ...weekendPack].forEach(x=> addTask({
-      id:crypto.randomUUID(), title:x.t, subject:x.s, due:x.d, pri:x.p||'P2', est:x.est||25, done:false, createdAt:Date.now()
-    }));
-    if(showAlert) { alert(`已生成：第 ${w.idx} 周（${cnRange(w.start,w.end)}）的待办清单`); }
-  }
-
-  // 备份 / 导入 / 打印 / 恢复
-  $('#exportBtn').onclick=()=>{ const data = store.all(); const blob=new Blob([JSON.stringify(data,null,2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`kaoyan-bio-data-${todayKey()}.json`; a.click(); URL.revokeObjectURL(a.href); };
-  $('#importFile').addEventListener('change', (e)=>{
-    const file=e.target.files[0]; if(!file) return; const fr=new FileReader(); fr.onload=()=>{ try{
-      const raw=JSON.parse(fr.result); for(const k in raw){ localStorage.setItem(k, JSON.stringify(raw[k])); }
-      alert('导入完成，页面将刷新'); location.reload();
-    }catch(err){ alert('导入失败：'+err.message); } }; fr.readAsText(file);
-  });
-  $('#printBtn').onclick=()=> window.print();
-  $('#resetAll').onclick=()=>{ if(confirm('确认清空本应用的所有数据？此操作不可撤销。')){ Object.keys(localStorage).filter(k=>k.startsWith(KEYP)).forEach(k=>localStorage.removeItem(k)); location.reload(); } };
-
-  // 首设向导
-  const ob=$('#onboard'); $('#onboardBtn').onclick=()=> ob.showModal && ob.showModal();
-  if(!store.get('booted', false)){
-    if('HTMLDialogElement' in window && HTMLDialogElement.prototype.showModal){ setTimeout(()=>ob.showModal(), 400); }
-    else { ob.setAttribute('open',''); }
-  }
-  ob.addEventListener('close',()=>{
-    if(ob.returnValue==='ok'){
-      const dt=$('#obDate').value; if(dt){ store.set('examDate', dt); examDateInput.value=dt; updateCountdown(); buildCalendar(); }
-      const gm=+$('#obGoal').value||180; store.set('goalMin', gm); goalMin.value=gm; updateGoalBadge();
-      if($('#obSeed').checked){
-        ['glycolysis: 糖酵解','replication: 复制','transcription: 转录','translation: 翻译','peptidoglycan: 肽聚糖','operon: 操纵子']
-          .forEach(s=>{ const [w,m]=s.split(':').map(x=>x.trim()); addCard(w,m); });
-        insertTemplates();
-      }
-    }
-    store.set('booted', true);
-  });
-
-  document.addEventListener('keydown', (e)=>{
-    if(e.target && (e.target.matches?.('input, textarea, [contenteditable="true"]'))) return;
-    if(e.key && e.key.toLowerCase?.()==='n'){ $('#taskTitle').focus(); }
-    if(e.code==='Space'){ e.preventDefault(); $('#startPause').click(); }
-  });
-
-  setTimeout(()=>{ drawCharts(); updateKPIs(); updateTodayProgress(); renderWeekPlan(); renderTimetable(); }, 200);
-  </script>
-
-  <!-- Firebase（保持可选） -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-analytics.js";
-    import {
-      getAuth, onAuthStateChanged,
-      signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut
-    } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAV2sDzzYW6qcQ2YCJUQ_IJxeqbAf27Lgs",
-      authDomain: "web-1-13c27.firebaseapp.com",
-      projectId: "web-1-13c27",
-      storageBucket: "web-1-13c27.firebasestorage.app",
-      messagingSenderId: "472569141099",
-      appId: "1:472569141099:web:a73ca462c677a53824de2e",
-      measurementId: "G-DG6YD17SES"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    try { getAnalytics(app); } catch(e) {}
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const authStatus = document.getElementById('authStatus');
-
-    async function userLogin(){
-      const email = prompt("请输入邮箱："); if(!email) return;
-      const pwd = prompt("请输入密码："); if(!pwd) return;
-      try{
-        await signInWithEmailAndPassword(auth, email, pwd);
-        alert("登录成功");
-      }catch(e){
-        if(e.code === 'auth/user-not-found'){
-          await createUserWithEmailAndPassword(auth, email, pwd);
-          alert("注册成功并已登录");
-        }else if(e.code === 'auth/invalid-credential'){
-          alert("登录失败：账号或密码不正确。");
-        }else{
-          alert("登录失败: "+e.message);
-        }
-      }
-    }
-    function userLogout(){ signOut(auth).catch(()=>{}); }
-    loginBtn.addEventListener('click', userLogin);
-    logoutBtn.addEventListener('click', userLogout);
-
-    const KEY_PREFIX = window.__KE_PREFIX__ || 'ke_bio_v1_';
-    function collectLocal(){
-      const all={};
-      for(let i=0;i<localStorage.length;i++){
-        const k=localStorage.key(i);
-        if(k && k.startsWith(KEY_PREFIX)){
-          all[k] = localStorage.getItem(k);
-        }
-      }
-      return all;
-    }
-    async function syncToCloud(uid){
-      const data = collectLocal();
-      await setDoc(doc(db, "users", uid), { data }, { merge:true });
-      console.log("✅ 已同步到云端", new Date().toISOString());
-    }
-    async function loadFromCloud(uid){
-      const snap = await getDoc(doc(db, "users", uid));
-      if(!snap.exists()){ console.log("云端无数据"); return false; }
-      const data = snap.data()?.data || {};
-      for(let i=localStorage.length-1;i>=0;i--){
-        const k=localStorage.key(i);
-        if(k && k.startsWith(KEY_PREFIX)) localStorage.removeItem(k);
-      }
-      Object.keys(data).forEach(k=> localStorage.setItem(k, data[k]));
-      console.log("⬇ 已从云端加载数据");
-      return true;
-    }
-
-    onAuthStateChanged(auth, async (user)=>{
-      if(user){
-        authStatus.textContent = user.email || '已登录';
-        loginBtn.hidden = true;
-        logoutBtn.hidden = false;
-        const loaded = await loadFromCloud(user.uid);
-        if(loaded && !sessionStorage.getItem('reloadedAfterCloud')){
-          sessionStorage.setItem('reloadedAfterCloud','1');
-          location.reload(); return;
-        }
-        if(!window.__syncTimer__){
-          window.__syncTimer__ = setInterval(()=>syncToCloud(user.uid), 30000);
-        }
-        window.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden'){ syncToCloud(user.uid).catch(()=>{}); }});
-      }else{
-        authStatus.textContent = '未登录';
-        loginBtn.hidden = false;
-        logoutBtn.hidden = true;
-        if(window.__syncTimer__){ clearInterval(window.__syncTimer__); window.__syncTimer__=null; }
+    document.getElementById('clearToday').addEventListener('click', ()=>{
+      if(confirm('清空今日的打卡与备注？')){
+        localStorage.removeItem(KEY(keyDate));
+        loadState();
       }
     });
+    loadState();
+
+    // ——— 展开/折叠全部周 ———
+    const expandBtn = document.getElementById('expandAll');
+    const collapseBtn = document.getElementById('collapseAll');
+    expandBtn.addEventListener('click', ()=> document.querySelectorAll('#weekly details').forEach(d=> d.open = true));
+    collapseBtn.addEventListener('click', ()=> document.querySelectorAll('#weekly details').forEach(d=> d.open = false));
   </script>
 </body>
 </html>
