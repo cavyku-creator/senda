@@ -95,6 +95,13 @@
       .card{box-shadow:none}
       a{color:#000}
     }
+  /* 倒计时样式 */
+    .countdown{display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+    .countnum{font-size:44px; font-weight:800; letter-spacing:1px}
+    .countgrid{display:grid; grid-template-columns: repeat(4, minmax(90px,1fr)); gap:12px; width:100%}
+    .countbox{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:10px 12px; text-align:center}
+    .countbox b{display:block; font-size:28px; margin-bottom:4px}
+    .countlabel{color:var(--muted); font-size:12px}
   </style>
 </head>
 <body>
@@ -124,6 +131,24 @@
   </header>
 
   <main class="container">
+    <!-- 考研倒计时 -->
+    <section id="countdownSec" class="card" style="margin-top:18px">
+      <h2>距离初试倒计时 <span class="badge">目标：2025-12-20</span></h2>
+      <div class="countdown">
+        <div class="countnum"><span id="dLeft">--</span><span class="muted"> 天</span></div>
+        <div style="flex:1"></div>
+      </div>
+      <div class="countgrid" style="margin-top:8px">
+        <div class="countbox"><b id="d">--</b><div class="countlabel">天</div></div>
+        <div class="countbox"><b id="h">--</b><div class="countlabel">小时</div></div>
+        <div class="countbox"><b id="m">--</b><div class="countlabel">分钟</div></div>
+        <div class="countbox"><b id="s">--</b><div class="countlabel">秒</div></div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="bar"><span id="countProgress" style="width:0%; background:linear-gradient(90deg, var(--accent), var(--accent-2))"></span></div>
+        <div class="muted" style="margin-top:6px" id="countTips"></div>
+      </div>
+    </section>
     <!-- 概览 -->
     <section id="overview" class="grid grid-2">
       <div class="card">
@@ -592,6 +617,51 @@
     const collapseBtn = document.getElementById('collapseAll');
     expandBtn.addEventListener('click', ()=> document.querySelectorAll('#weekly details').forEach(d=> d.open = true));
     collapseBtn.addEventListener('click', ()=> document.querySelectorAll('#weekly details').forEach(d=> d.open = false));
+      // ——— 初试倒计时（以本机本地时间为准） ———
+    const EXAM = new Date('2025-12-20T00:00:00'); // 当地时间 0点
+    const START = new Date('2025-08-12T00:00:00');
+    const dEl = document.getElementById('d');
+    const hEl = document.getElementById('h');
+    const mEl = document.getElementById('m');
+    const sEl = document.getElementById('s');
+    const dLeftEl = document.getElementById('dLeft');
+    const progEl = document.getElementById('countProgress');
+    const tipsEl = document.getElementById('countTips');
+
+    function pad2(n){return String(n).padStart(2,'0')}
+    function updateCountdown(){
+      const now = new Date();
+      let diff = EXAM - now;
+      if(diff < 0){
+        // 已到或超过考试日
+        const passedDays = Math.floor((now - EXAM)/86400000);
+        dEl && (dEl.textContent = '0');
+        hEl && (hEl.textContent = '00');
+        mEl && (mEl.textContent = '00');
+        sEl && (sEl.textContent = '00');
+        dLeftEl && (dLeftEl.textContent = '0');
+        tipsEl && (tipsEl.textContent = `考试日已到（或已过去${passedDays}天）`);
+        progEl && (progEl.style.width = '100%');
+        return;
+      }
+      const days = Math.floor(diff/86400000); diff -= days*86400000;
+      const hours = Math.floor(diff/3600000); diff -= hours*3600000;
+      const mins = Math.floor(diff/60000); diff -= mins*60000;
+      const secs = Math.floor(diff/1000);
+      dEl && (dEl.textContent = String(days));
+      hEl && (hEl.textContent = pad2(hours));
+      mEl && (mEl.textContent = pad2(mins));
+      sEl && (sEl.textContent = pad2(secs));
+      dLeftEl && (dLeftEl.textContent = String(days));
+
+      // 进度条：从 START 到 EXAM
+      let pct = 0;
+      if(now <= START) pct = 0; else if(now >= EXAM) pct = 100; else pct = ((now - START) / (EXAM - START)) * 100;
+      progEl && (progEl.style.width = pct.toFixed(2) + '%');
+      tipsEl && (tipsEl.textContent = `进度：${pct.toFixed(1)}%｜开始于 ${START.toLocaleDateString()}，目标 ${EXAM.toLocaleDateString()}`);
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
   </script>
 </body>
 </html>
